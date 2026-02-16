@@ -12,12 +12,15 @@ import 'features/auth/auth_screen.dart';
 import 'features/auth/auth_service.dart';
 import 'features/pet_management/pet_dashboard_screen.dart';
 
+import 'core/services/notification_service.dart';
+
 final logger = Logger();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   late final Isar isar;
+  final notificationService = NotificationService();
 
   try {
     // Load environment variables
@@ -31,13 +34,19 @@ Future<void> main() async {
 
     // Initialize Isar local database
     isar = await IsarService.init();
+
+    // Initialize Notifications
+    await notificationService.init();
   } catch (e) {
     logger.e('Error during initialization: $e');
   }
 
   runApp(
     ProviderScope(
-      overrides: [isarProvider.overrideWithValue(isar)],
+      overrides: [
+        isarProvider.overrideWithValue(isar),
+        notificationServiceProvider.overrideWithValue(notificationService),
+      ],
       child: const PetCareApp(),
     ),
   );

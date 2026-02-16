@@ -1,7 +1,7 @@
-# Plan: PetCare Brain (Flutter Implementation)
+# Plan: Pet Pal Health (Flutter Implementation)
 
 ## Overview
-PetCare Brain is a mobile-first application designed to help pet owners track and manage their pets' health needs. This plan details the implementation of the MVP using Flutter, following a local-first architecture with Supabase for real-time synchronization and cloud backup.
+Pet Pal Health is a mobile-first application designed to help pet owners track and manage their pets' health needs. This plan details the implementation of the MVP using Flutter, following a local-first architecture with Supabase for real-time synchronization and cloud backup.
 
 **Project Type:** MOBILE (Flutter)
 
@@ -46,25 +46,25 @@ lib/
 
 ## Task Breakdown
 
-### Phase 1: Foundation (P0)
-| Task ID | Name | Agent | Skills | Priority | Dependencies | INPUT→OUTPUT→VERIFY |
-|---------|------|-------|--------|----------|--------------|----------------------|
-| F-001 | Supabase Project Setup | `database-architect` | supabase, db-design | P0 | None | Requirements → Tables (pets, schedules, profiles) + RLS policies → Verify via Supabase Dashboard queries. |
-| F-002 | Flutter Project Scaffold | `mobile-developer` | clean-code | P0 | None | `flutter create` → Project with folder structure + `pubspec.yaml` dependencies → `flutter pub get` success. |
-| F-003 | Local Database (Isar) Setup | `mobile-developer` | database-design | P0 | F-002 | Isar schemas → Isar singleton + DB initialization logic → Test local write/read. |
+### Phase 1: Foundation (P0) ✅
+| Task ID | Name | Agent | Skills | Priority | Dependencies | Status |
+|---------|------|-------|--------|----------|--------------|--------|
+| F-001 | Supabase Project Setup | `database-architect` | supabase, db-design | P0 | None | ✅ Done |
+| F-002 | Flutter Project Scaffold | `mobile-developer` | clean-code | P0 | None | ✅ Done |
+| F-003 | Local Database (Isar) Setup | `mobile-developer` | database-design | P0 | F-002 | ✅ Done |
 
-### Phase 2: Core Components (P1)
-| Task ID | Name | Agent | Skills | Priority | Dependencies | INPUT→OUTPUT→VERIFY |
-|---------|------|-------|--------|----------|--------------|----------------------|
-| C-001 | Authentication (Supabase) | `mobile-developer` | auth | P1 | F-001, F-002 | Supabase Auth integration (Email/Social) → Login/Signup screens → Successful session persistence on app restart. |
-| C-002 | Pet Profile Management | `mobile-developer` | mobile-design | P1 | F-003 | CRUD Logic (Riverpod) → Create/Edit screens → Verify data reflects in Isar and syncs to Supabase. |
-| C-003 | Local-First Sync Engine | `database-architect` | performance | P1 | F-001, F-003 | Sync logic (Isar ↔ Supabase) → Background sync worker → Verify offline changes propagate when reconnecting. |
+### Phase 2: Core Components (P1) ✅
+| Task ID | Name | Agent | Skills | Priority | Dependencies | Status |
+|---------|------|-------|--------|----------|--------------|--------|
+| C-001 | Authentication (Supabase) | `mobile-developer` | auth | P1 | F-001, F-002 | ✅ Done |
+| C-002 | Pet Profile Management | `mobile-developer` | mobile-design | P1 | F-003 | ✅ Done |
+| C-003 | Local-First Sync Engine | `database-architect` | performance | P1 | F-001, F-003 | ✅ Done |
 
-### Phase 3: Reminders & Notifications (P1)
-| Task ID | Name | Agent | Skills | Priority | Dependencies | INPUT→OUTPUT→VERIFY |
-|---------|------|-------|--------|----------|--------------|----------------------|
-| R-001 | Health Schedule Logic | `mobile-developer` | clean-code | P1 | C-002 | Schedule models + Logic → Schedule creation form → Verify schedule objects persist in local DB. |
-| R-002 | Notification System | `mobile-developer` | mobile-design | P1 | R-001 | `flutter_local_notifications` setup → Trigger notifications based on schedules → Verify notification appears on device/emulator. |
+### Phase 3: Reminders & Notifications (P1) 🚧
+| Task ID | Name | Agent | Skills | Priority | Dependencies | Status |
+|---------|------|-------|--------|----------|--------------|--------|
+| R-001 | Health Schedule Logic | `mobile-developer` | clean-code | P1 | C-002 | ✅ Done |
+| R-002 | Notification System | `mobile-developer` | mobile-design | P1 | R-001 | ✅ Done |
 
 ### Phase 4: Sharing & Polish (P2)
 | Task ID | Name | Agent | Skills | Priority | Dependencies | INPUT→OUTPUT→VERIFY |
