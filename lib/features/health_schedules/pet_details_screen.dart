@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/local/isar_models.dart';
 import 'schedule_provider.dart';
 import 'add_schedule_screen.dart';
+import '../sharing/sharing_screen.dart';
 
 class PetDetailsScreen extends ConsumerWidget {
   final Pet pet;
@@ -40,6 +41,17 @@ class PetDetailsScreen extends ConsumerWidget {
                       ),
                     ),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.share, color: Colors.white),
+                onPressed: () {
+                  if (pet.supabaseId == null) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => SharingScreen(pet: pet)),
+                  );
+                },
+              ),
+            ],
           ),
           SliverToBoxAdapter(
             child: Padding(

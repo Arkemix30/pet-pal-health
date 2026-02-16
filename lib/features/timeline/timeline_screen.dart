@@ -16,7 +16,6 @@ class TimelineScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final schedulesAsync = ref.watch(allSchedulesProvider);
     final petsAsync = ref.watch(petsStreamProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -178,7 +177,7 @@ class _TimelineTile extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: (isUpcoming ? const Color(0xFF2D6A4F) : Colors.grey)
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

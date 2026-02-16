@@ -41,8 +41,9 @@ class NotificationService {
           iOS: initializationSettingsDarwin,
         );
 
+    // v20 API uses named argument 'settings' for initialize
     await _notificationsPlugin.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse details) {
         // Handle notification tap
       },
@@ -83,13 +84,12 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
   Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id);
+    // v20 API uses named argument 'id' for cancel
+    await _notificationsPlugin.cancel(id: id);
   }
 
   Future<void> cancelAllNotifications() async {
