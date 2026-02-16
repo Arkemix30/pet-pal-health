@@ -39,11 +39,16 @@ class NotificationService {
           requestSoundPermission: true,
         );
 
-    // 4. Combined settings
+    // 4. Linux settings
+    const LinuxInitializationSettings initializationSettingsLinux =
+        LinuxInitializationSettings(defaultActionName: 'Open notification');
+
+    // 5. Combined settings
     const InitializationSettings initializationSettings =
         InitializationSettings(
           android: initializationSettingsAndroid,
           iOS: initializationSettingsDarwin,
+          linux: initializationSettingsLinux,
         );
 
     // v20 API uses named argument 'settings' for initialize
@@ -54,7 +59,7 @@ class NotificationService {
       },
     );
 
-    // 5. Request permissions for Android 13+
+    // 6. Request permissions for Android 13+
     if (Platform.isAndroid) {
       await _notificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -87,6 +92,7 @@ class NotificationService {
           priority: Priority.high,
         ),
         iOS: DarwinNotificationDetails(),
+        linux: LinuxNotificationDetails(defaultActionName: 'Open notification'),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );

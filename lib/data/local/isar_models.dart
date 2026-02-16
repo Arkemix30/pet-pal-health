@@ -31,6 +31,7 @@ class Pet {
   DateTime? birthDate;
   double? weightKg;
   String? photoUrl;
+  bool isDeleted = false;
   DateTime? createdAt;
 }
 
