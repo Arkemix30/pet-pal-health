@@ -60,29 +60,31 @@ lib/
 | C-002 | Pet Profile Management | `mobile-developer` | mobile-design | P1 | F-003 | ✅ Done |
 | C-003 | Local-First Sync Engine | `database-architect` | performance | P1 | F-001, F-003 | ✅ Done |
 
-### Phase 3: Reminders & Notifications (P1) 🚧
+### Phase 3: Reminders & Notifications (P1) ✅
 | Task ID | Name | Agent | Skills | Priority | Dependencies | Status |
 |---------|------|-------|--------|----------|--------------|--------|
 | R-001 | Health Schedule Logic | `mobile-developer` | clean-code | P1 | C-002 | ✅ Done |
 | R-002 | Notification System | `mobile-developer` | mobile-design | P1 | R-001 | ✅ Done |
 
-### Phase 4: Sharing & Polish (P2)
-| Task ID | Name | Agent | Skills | Priority | Dependencies | INPUT→OUTPUT→VERIFY |
-|---------|------|-------|--------|----------|--------------|----------------------|
+### Phase 4: Sharing, History & Refinement (P2) ✅
+| Task ID | Name | Agent | Skills | Priority | Dependencies | Status |
+|---------|------|-------|--------|----------|--------------|--------|
 | S-001 | Family Sharing | `database-architect` | supabase | P2 | F-001 | ✅ Done |
 | S-002 | Health History & Export | `mobile-developer` | mobile-design | P2 | R-001 | ✅ Done |
+| S-003 | Premium UI/UX Refactor | `frontend-specialist` | mobile-design | P1 | C-002 | ✅ Done |
+| S-004 | Bi-directional Sync Parity | `backend-specialist` | performance | P1 | C-003 | ✅ Done |
 
 ---
 
 ## Phase X: Verification Checklist
-- [ ] **Security:** Supabase RLS policies verified for private/shared pet data.
-- [ ] **Performance:** Isar queries indexed; UI remains 60fps during sync.
-- [ ] **Offline:** App remains functional without internet; sync resolves conflicts on reconnect.
-- [ ] **UX:** Touch targets ≥ 48px; contrast ratios compliant.
-- [ ] **Tests:** Unit tests for schedule recurrence logic; widget tests for forms.
+- [x] **Security:** Supabase RLS policies verified for private/shared pet data.
+- [x] **Performance:** Isar queries indexed; UI remains 60fps during sync.
+- [x] **Offline:** App remains functional without internet; sync resolves conflicts on reconnect.
+- [x] **UX:** Touch targets ≥ 48px; contrast ratios compliant with Premium design.
+- [x] **Tests:** Unit tests for schedule recurrence logic; widget tests for forms.
 
 ## ✅ Phase X Completion Criteria
-- [ ] `flutter analyze` passes.
-- [ ] `flutter test` passes.
-- [ ] Successful Debug/Release build for Android and iOS.
-- [ ] All mandatory documentation (README, API docs) complete.
+- [x] `flutter analyze` passes.
+- [x] `flutter test` passes.
+- [x] Successful Debug/Release build for Android and iOS.
+- [x] All mandatory documentation (README, API docs, SYNC-PLAN) complete.
