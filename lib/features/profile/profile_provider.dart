@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
@@ -15,9 +16,16 @@ final profileProvider = AsyncNotifierProvider<ProfileNotifier, Profile?>(
   ProfileNotifier.new,
 );
 
-final userSettingsProvider = AsyncNotifierProvider<UserSettingsNotifier, UserSettings?>(
-  UserSettingsNotifier.new,
-);
+final userSettingsProvider =
+    AsyncNotifierProvider<UserSettingsNotifier, UserSettings?>(
+      UserSettingsNotifier.new,
+    );
+
+final userSettingsRepositoryProvider = Provider((ref) {
+  final isar = ref.watch(isarProvider);
+  final supabase = Supabase.instance.client;
+  return UserSettingsRepository(isar, supabase);
+});
 
 class ProfileRepository {
   final Isar _isar;
@@ -26,9 +34,10 @@ class ProfileRepository {
   ProfileRepository(this._isar, this._supabase);
 
   Stream<Profile?> watchProfile() {
-    return _isar.profiles.where().watch(fireImmediately: true).map(
-          (profiles) => profiles.isEmpty ? null : profiles.first,
-        );
+    return _isar.profiles
+        .where()
+        .watch(fireImmediately: true)
+        .map((profiles) => profiles.isEmpty ? null : profiles.first);
   }
 
   Future<Profile?> getProfile() async {
@@ -55,7 +64,10 @@ class ProfileRepository {
       };
 
       if (profile.supabaseId != null) {
-        await _supabase.from('profiles').update(data).eq('id', profile.supabaseId!);
+        await _supabase
+            .from('profiles')
+            .update(data)
+            .eq('id', profile.supabaseId!);
       } else {
         final res = await _supabase
             .from('profiles')
@@ -99,7 +111,8 @@ class ProfileRepository {
           : null;
 
       if (localProfile.updatedAt == null ||
-          (remoteUpdatedAt != null && remoteUpdatedAt.isAfter(localProfile.updatedAt!))) {
+          (remoteUpdatedAt != null &&
+              remoteUpdatedAt.isAfter(localProfile.updatedAt!))) {
         localProfile.supabaseId = remoteData['id'];
         localProfile.fullName = remoteData['full_name'];
         localProfile.avatarUrl = remoteData['avatar_url'];
@@ -119,10 +132,15 @@ class ProfileRepository {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final fileName = 'avatars/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await _supabase.storage.from('pet-pal-health').upload(fileName, filePath);
+      final fileName =
+          'avatars/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await _supabase.storage
+          .from('pet-pal-health')
+          .upload(fileName, File(filePath));
 
-      final publicUrl = _supabase.storage.from('pet-pal-health').getPublicUrl(fileName);
+      final publicUrl = _supabase.storage
+          .from('pet-pal-health')
+          .getPublicUrl(fileName);
 
       final profile = await getProfile();
       if (profile != null) {
@@ -181,20 +199,21 @@ class UserSettingsRepository {
   UserSettingsRepository(this._isar, this._supabase);
 
   Stream<UserSettings?> watchUserSettings() {
-    return _isar.userSettingss.where().watch(fireImmediately: true).map(
-          (settings) => settings.isEmpty ? null : settings.first,
-        );
+    return _isar.userSettings
+        .where()
+        .watch(fireImmediately: true)
+        .map((settings) => settings.isEmpty ? null : settings.first);
   }
 
   Future<UserSettings?> getUserSettings() async {
-    final settings = await _isar.userSettingss.where().findAll();
+    final settings = await _isar.userSettings.where().findAll();
     return settings.isEmpty ? null : settings.first;
   }
 
   Future<void> saveUserSettings(UserSettings settings) async {
     settings.updatedAt = DateTime.now();
     await _isar.writeTxn(() async {
-      await _isar.userSettingss.put(settings);
+      await _isar.userSettings.put(settings);
     });
     _syncSettingsToRemote(settings);
   }
@@ -214,7 +233,10 @@ class UserSettingsRepository {
       };
 
       if (settings.supabaseId != null) {
-        await _supabase.from('user_settings').update(data).eq('id', settings.supabaseId!);
+        await _supabase
+            .from('user_settings')
+            .update(data)
+            .eq('id', settings.supabaseId!);
       } else {
         final res = await _supabase
             .from('user_settings')
@@ -223,7 +245,7 @@ class UserSettingsRepository {
             .single();
         settings.supabaseId = res['id'];
         await _isar.writeTxn(() async {
-          await _isar.userSettingss.put(settings);
+          await _isar.userSettings.put(settings);
         });
       }
     } catch (e) {
@@ -244,8 +266,8 @@ class UserSettingsRepository {
 
       if (remoteData == null) return;
 
-      final localSettings = await _isar.userSettingss.where().findAll();
-      UserSettings? localSetting;
+      final localSettings = await _isar.userSettings.where().findAll();
+      late UserSettings localSetting;
 
       if (localSettings.isNotEmpty) {
         localSetting = localSettings.first;
@@ -258,17 +280,23 @@ class UserSettingsRepository {
           : null;
 
       if (localSetting.updatedAt == null ||
-          (remoteUpdatedAt != null && remoteUpdatedAt.isAfter(localSetting.updatedAt!))) {
+          (remoteUpdatedAt != null &&
+              remoteUpdatedAt.isAfter(localSetting.updatedAt!))) {
         localSetting.supabaseId = remoteData['id'];
-        localSetting.enableNotifications = remoteData['enable_notifications'] ?? true;
-        localSetting.enableVaccineReminders = remoteData['enable_vaccine_reminders'] ?? true;
-        localSetting.enableMedicationReminders = remoteData['enable_medication_reminders'] ?? true;
-        localSetting.enableAppointmentReminders = remoteData['enable_appointment_reminders'] ?? true;
-        localSetting.reminderHoursBefore = remoteData['reminder_hours_before'] ?? 24;
+        localSetting.enableNotifications =
+            remoteData['enable_notifications'] ?? true;
+        localSetting.enableVaccineReminders =
+            remoteData['enable_vaccine_reminders'] ?? true;
+        localSetting.enableMedicationReminders =
+            remoteData['enable_medication_reminders'] ?? true;
+        localSetting.enableAppointmentReminders =
+            remoteData['enable_appointment_reminders'] ?? true;
+        localSetting.reminderHoursBefore =
+            remoteData['reminder_hours_before'] ?? 24;
         localSetting.updatedAt = remoteUpdatedAt;
 
         await _isar.writeTxn(() async {
-          await _isar.userSettingss.put(localSetting!);
+          await _isar.userSettings.put(localSetting);
         });
       }
     } catch (e) {
@@ -282,7 +310,7 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
 
   @override
   Future<UserSettings?> build() async {
-    _repo = ref.watch(profileRepositoryProvider);
+    _repo = ref.watch(userSettingsRepositoryProvider);
     return _repo.getUserSettings();
   }
 
@@ -295,13 +323,17 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
   }) async {
     final currentSettings = state.value ?? UserSettings();
 
-    if (enableNotifications != null) currentSettings.enableNotifications = enableNotifications;
-    if (enableVaccineReminders != null) currentSettings.enableVaccineReminders = enableVaccineReminders;
-    if (enableMedicationReminders != null) currentSettings.enableMedicationReminders = enableMedicationReminders;
+    if (enableNotifications != null)
+      currentSettings.enableNotifications = enableNotifications;
+    if (enableVaccineReminders != null)
+      currentSettings.enableVaccineReminders = enableVaccineReminders;
+    if (enableMedicationReminders != null)
+      currentSettings.enableMedicationReminders = enableMedicationReminders;
     if (enableAppointmentReminders != null) {
       currentSettings.enableAppointmentReminders = enableAppointmentReminders;
     }
-    if (reminderHoursBefore != null) currentSettings.reminderHoursBefore = reminderHoursBefore;
+    if (reminderHoursBefore != null)
+      currentSettings.reminderHoursBefore = reminderHoursBefore;
 
     state = const AsyncLoading();
     await _repo.saveUserSettings(currentSettings);
