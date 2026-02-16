@@ -136,7 +136,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
                                 ? [
                                     BoxShadow(
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),

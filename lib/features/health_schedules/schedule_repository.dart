@@ -44,12 +44,13 @@ class ScheduleRepository {
       await _isar.healthSchedules.put(schedule);
     });
 
-    // 2. Schedule local notification
-    await _notificationService.scheduleNotification(
-      id: schedule.id,
+    // 2. Schedule recurring local notification
+    await _notificationService.scheduleRecurringNotification(
+      baseId: schedule.id,
       title: "Pet Care Reminder: ${schedule.title}",
       body: "Time for your pet's ${schedule.type}!",
-      scheduledDate: schedule.startDate,
+      startDate: schedule.startDate,
+      frequency: schedule.frequency ?? 'one-time',
     );
 
     // 3. Sync to remote
@@ -101,16 +102,16 @@ class ScheduleRepository {
       await _isar.healthSchedules.put(schedule);
     });
 
-    // 2. Cancel existing notification if any
-    await _notificationService.cancelNotification(schedule.id);
+    // 2. Cancel all recurring notifications
+    await _notificationService.cancelRecurringNotifications(schedule.id);
 
     // 3. Sync to remote
     await _syncScheduleToRemote(schedule);
   }
 
   Future<void> deleteSchedule(int localId, String? supabaseId) async {
-    // 1. Cancel notification
-    await _notificationService.cancelNotification(localId);
+    // 1. Cancel all recurring notifications
+    await _notificationService.cancelRecurringNotifications(localId);
 
     // 2. Delete locally
     await _isar.writeTxn(() async {
@@ -181,13 +182,14 @@ class ScheduleRepository {
 
           await _isar.healthSchedules.put(schedule);
 
-          // Update/Re-schedule notification if not completed
+          // Update/Re-schedule recurring notification if not completed
           if (!schedule.isCompleted) {
-            await _notificationService.scheduleNotification(
-              id: schedule.id,
+            await _notificationService.scheduleRecurringNotification(
+              baseId: schedule.id,
               title: "Pet Care Reminder: ${schedule.title}",
               body: "Time for your pet's ${schedule.type}!",
-              scheduledDate: schedule.startDate,
+              startDate: schedule.startDate,
+              frequency: schedule.frequency ?? 'one-time',
             );
           }
         }

@@ -12,6 +12,8 @@ import 'features/auth/auth_screen.dart';
 import 'features/auth/welcome_screen.dart';
 import 'features/pet_management/pet_dashboard_screen.dart';
 import 'features/timeline/timeline_screen.dart';
+import 'features/vet_directory/vet_screen.dart';
+import 'features/profile/profile_screen.dart';
 
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
@@ -109,6 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const PetDashboardScreen(),
     const TimelineScreen(),
+    const VetScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -133,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildNavItem(0, Icons.home_filled, 'Home'),
             _buildNavItem(1, Icons.history, 'Timeline'),
-            _buildNavItem(2, Icons.calendar_month, 'Calendar'),
+            _buildNavItem(2, Icons.local_hospital, 'Vets'),
             _buildNavItem(3, Icons.person, 'Profile'),
           ],
         ),

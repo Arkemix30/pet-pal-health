@@ -99,78 +99,87 @@ class PetDashboardScreen extends ConsumerWidget {
       pinned: true,
       backgroundColor: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
       elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          padding: const EdgeInsets.only(top: 60, left: 20, right: 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Dashboard',
-                      style: GoogleFonts.manrope(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? Colors.white
-                            : theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    Row(
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCollapsed = constraints.maxHeight < 200;
+          return FlexibleSpaceBar(
+            background: Container(
+              padding: EdgeInsets.only(
+                top: isCollapsed ? 80 : 60,
+                left: 20,
+                right: 0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.notifications_none,
-                            color: theme.colorScheme.onSurface,
+                        Text(
+                          'Dashboard',
+                          style: GoogleFonts.manrope(
+                            fontSize: isCollapsed ? 20 : 24,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? Colors.white
+                                : theme.colorScheme.onSurface,
                           ),
-                          onPressed: () {},
                         ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.sync,
-                            color: theme.colorScheme.primary,
-                          ),
-                          onPressed: () async {
-                            await ref
-                                .read(petManagementProvider)
-                                .performFullSync();
-                            final schedMgr = ref.read(
-                              scheduleManagementProvider,
-                            );
-                            await schedMgr.syncAllUnsynced();
-                            await schedMgr.fetchSchedulesFromRemote();
-                          },
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.notifications_none,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                              onPressed: () {},
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.sync,
+                                color: theme.colorScheme.primary,
+                              ),
+                              onPressed: () async {
+                                await ref
+                                    .read(petManagementProvider)
+                                    .performFullSync();
+                                final schedMgr = ref.read(
+                                  scheduleManagementProvider,
+                                );
+                                await schedMgr.syncAllUnsynced();
+                                await schedMgr.fetchSchedulesFromRemote();
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 110,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: pets.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == pets.length) {
-                      return _buildAddPetButton(context);
-                    }
+                  ),
+                  SizedBox(height: isCollapsed ? 12 : 20),
+                  SizedBox(
+                    height: isCollapsed ? 60 : 110,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: pets.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == pets.length) {
+                          return _buildAddPetButton(context);
+                        }
 
-                    final pet = pets[index];
-                    final isActive = pet.supabaseId == activePet.supabaseId;
-                    return _buildPetAvatarItem(context, pet, isActive, ref);
-                  },
-                ),
+                        final pet = pets[index];
+                        final isActive = pet.supabaseId == activePet.supabaseId;
+                        return _buildPetAvatarItem(context, pet, isActive, ref);
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -497,7 +506,7 @@ class PetDashboardScreen extends ConsumerWidget {
             height: 100,
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (_, __) => const Text('Failed to load reminders'),
+          error: (error, stack) => const Text('Failed to load reminders'),
         );
       },
     );
