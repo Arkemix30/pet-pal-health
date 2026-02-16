@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../data/local/isar_models.dart';
@@ -15,7 +14,7 @@ class TimelineScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final schedulesAsync = ref.watch(allSchedulesProvider);
-    final petsAsync = ref.watch(petsStreamProvider);
+    // final petsAsync = ref.watch(petsStreamProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),

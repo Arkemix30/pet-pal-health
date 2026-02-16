@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/local/isar_models.dart';
 import '../health_schedules/pet_details_screen.dart';
 import 'pet_provider.dart';
-import 'add_pet_screen.dart';
+import 'pet_form_screen.dart';
 
 class PetDashboardScreen extends ConsumerWidget {
   const PetDashboardScreen({super.key});
@@ -25,6 +26,19 @@ class PetDashboardScreen extends ConsumerWidget {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sync, color: Color(0xFF2D6A4F)),
+            onPressed: () async {
+              await ref.read(petManagementProvider).syncAllUnsynced();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Syncing pets with cloud...')),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: petsAsync.when(
         data: (pets) {
@@ -48,7 +62,7 @@ class PetDashboardScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const AddPetScreen())),
+        ).push(MaterialPageRoute(builder: (_) => const PetFormScreen())),
         icon: const Icon(Icons.add),
         label: const Text('Add Pet'),
         backgroundColor: theme.colorScheme.primary,
@@ -124,7 +138,14 @@ class _PetCard extends StatelessWidget {
                 ),
                 child: pet.photoUrl != null
                     ? ClipOval(
-                        child: Image.network(pet.photoUrl!, fit: BoxFit.cover),
+                        child: CachedNetworkImage(
+                          imageUrl: pet.photoUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey[200]),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
+                        ),
                       )
                     : Icon(
                         Icons.pets,
