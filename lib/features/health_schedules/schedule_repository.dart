@@ -31,6 +31,13 @@ class ScheduleRepository {
         .watch(fireImmediately: true);
   }
 
+  // Watch all schedules across all pets
+  Stream<List<HealthSchedule>> watchAllSchedules() {
+    return _isar.healthSchedules.where().sortByStartDate().watch(
+      fireImmediately: true,
+    );
+  }
+
   Future<void> saveSchedule(HealthSchedule schedule) async {
     // 1. Save locally
     await _isar.writeTxn(() async {
@@ -60,6 +67,8 @@ class ScheduleRepository {
         'start_date': schedule.startDate.toIso8601String(),
         'frequency': schedule.frequency,
         'notes': schedule.notes,
+        'is_completed': schedule.isCompleted,
+        'completed_at': schedule.completedAt?.toIso8601String(),
       };
 
       if (schedule.supabaseId != null) {
@@ -81,6 +90,22 @@ class ScheduleRepository {
     } catch (e) {
       print('Schedule sync failed: $e');
     }
+  }
+
+  Future<void> completeSchedule(HealthSchedule schedule) async {
+    schedule.isCompleted = true;
+    schedule.completedAt = DateTime.now();
+
+    // 1. Update locally
+    await _isar.writeTxn(() async {
+      await _isar.healthSchedules.put(schedule);
+    });
+
+    // 2. Cancel existing notification if any
+    await _notificationService.cancelNotification(schedule.id);
+
+    // 3. Sync to remote
+    _syncScheduleToRemote(schedule);
   }
 
   Future<void> deleteSchedule(int localId, String? supabaseId) async {

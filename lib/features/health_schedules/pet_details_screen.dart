@@ -49,73 +49,101 @@ class PetDetailsScreen extends ConsumerWidget {
                 children: [
                   _buildPetInfo(theme),
                   const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Upcoming Health Tasks',
-                        style: GoogleFonts.outfit(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.add_circle,
-                          color: Color(0xFF2D6A4F),
-                        ),
-                        onPressed: () {
-                          if (pet.supabaseId == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Please wait for sync to complete',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => AddScheduleScreen(
-                                petSupabaseId: pet.supabaseId!,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                  _buildSectionHeader(
+                    context,
+                    'Upcoming Tasks',
+                    onAdd: () => _navigateToAddSchedule(context),
                   ),
                   const SizedBox(height: 16),
                   schedulesAsync.when(
                     data: (schedules) {
-                      if (schedules.isEmpty) {
+                      final upcoming = schedules
+                          .where((s) => !s.isCompleted)
+                          .toList();
+                      if (upcoming.isEmpty) {
                         return const Center(
                           child: Text('No upcoming tasks scheduled'),
                         );
                       }
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: schedules.length,
-                        itemBuilder: (context, index) {
-                          return _ScheduleTile(
-                            schedule: schedules[index],
-                          ).animate().fadeIn(delay: (index * 100).ms).slideX();
-                        },
-                      );
+                      return _buildScheduleList(upcoming);
                     },
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Text('Error loading schedules: $e'),
                   ),
-                  const SizedBox(height: 100), // Padding for bottom
+                  const SizedBox(height: 32),
+                  _buildSectionHeader(context, 'Recent History'),
+                  const SizedBox(height: 16),
+                  schedulesAsync.when(
+                    data: (schedules) {
+                      final history = schedules
+                          .where((s) => s.isCompleted)
+                          .toList();
+                      if (history.isEmpty) {
+                        return const Center(
+                          child: Text('No completed tasks yet'),
+                        );
+                      }
+                      return _buildScheduleList(history);
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, _) => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _navigateToAddSchedule(BuildContext context) {
+    if (pet.supabaseId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please wait for sync to complete')),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddScheduleScreen(petSupabaseId: pet.supabaseId!),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title, {
+    VoidCallback? onAdd,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        if (onAdd != null)
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: Color(0xFF2D6A4F)),
+            onPressed: onAdd,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildScheduleList(List<HealthSchedule> schedules) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: schedules.length,
+      itemBuilder: (context, index) {
+        return _ScheduleTile(
+          schedule: schedules[index],
+        ).animate().fadeIn(delay: (index * 100).ms).slideX();
+      },
     );
   }
 
@@ -158,12 +186,12 @@ class PetDetailsScreen extends ConsumerWidget {
   }
 }
 
-class _ScheduleTile extends StatelessWidget {
+class _ScheduleTile extends ConsumerWidget {
   final HealthSchedule schedule;
   const _ScheduleTile({required this.schedule});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Container(
@@ -171,27 +199,78 @@ class _ScheduleTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(
+          color: schedule.isCompleted
+              ? Colors.green.withOpacity(0.2)
+              : Colors.grey[100]!,
+        ),
       ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color:
+                (schedule.isCompleted
+                        ? Colors.green
+                        : theme.colorScheme.primary)
+                    .withOpacity(0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
-            _getIcon(schedule.type),
-            color: theme.colorScheme.primary,
+            schedule.isCompleted ? Icons.check : _getIcon(schedule.type),
+            color: schedule.isCompleted
+                ? Colors.green
+                : theme.colorScheme.primary,
             size: 20,
           ),
         ),
         title: Text(
           schedule.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            decoration: schedule.isCompleted
+                ? TextDecoration.lineThrough
+                : null,
+            color: schedule.isCompleted ? Colors.grey : Colors.black,
+          ),
         ),
-        subtitle: Text(_formatDate(schedule.startDate)),
-        trailing: const Icon(Icons.chevron_right, size: 16),
+        subtitle: Text(
+          schedule.isCompleted
+              ? 'Completed on ${_formatDate(schedule.completedAt ?? schedule.startDate)}'
+              : _formatDate(schedule.startDate),
+        ),
+        trailing: !schedule.isCompleted
+            ? IconButton(
+                icon: const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.grey,
+                ),
+                onPressed: () => _markAsDone(context, ref),
+              )
+            : null,
+      ),
+    );
+  }
+
+  void _markAsDone(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete Task?'),
+        content: Text('Did you complete "${schedule.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(scheduleManagementProvider).completeSchedule(schedule);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Yes, Done'),
+          ),
+        ],
       ),
     );
   }

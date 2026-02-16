@@ -9,6 +9,10 @@ final petSchedulesProvider =
           .watchSchedules(petSupabaseId);
     });
 
+final allSchedulesProvider = StreamProvider<List<HealthSchedule>>((ref) {
+  return ref.watch(scheduleRepositoryProvider).watchAllSchedules();
+});
+
 final scheduleManagementProvider = Provider((ref) {
   return ref.watch(scheduleRepositoryProvider);
 });

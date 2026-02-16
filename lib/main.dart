@@ -11,6 +11,7 @@ import 'features/auth/auth_provider.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/auth/auth_service.dart';
 import 'features/pet_management/pet_dashboard_screen.dart';
+import 'features/timeline/timeline_screen.dart';
 
 import 'core/services/notification_service.dart';
 
@@ -87,15 +88,29 @@ class PetCareApp extends ConsumerWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const PetDashboardScreen(),
+    const TimelineScreen(),
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'PetCare Brain',
+          _currentIndex == 0 ? 'My Pet Family' : 'Health Timeline',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -109,7 +124,29 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const PetDashboardScreen(),
+      body: _screens[_currentIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          selectedItemColor: theme.colorScheme.primary,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.pets), label: 'Pets'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              label: 'Timeline',
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

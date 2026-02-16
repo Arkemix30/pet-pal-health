@@ -6,7 +6,7 @@ part 'isar_models.g.dart';
 class Profile {
   Id id = Isar.autoIncrement;
 
-  @Index(unique: true, replace: true)
+  @Index()
   String? supabaseId;
 
   String? fullName;
@@ -18,7 +18,7 @@ class Profile {
 class Pet {
   Id id = Isar.autoIncrement;
 
-  @Index(unique: true, replace: true)
+  @Index()
   String? supabaseId;
 
   String? ownerId;
@@ -38,7 +38,7 @@ class Pet {
 class HealthSchedule {
   Id id = Isar.autoIncrement;
 
-  @Index(unique: true, replace: true)
+  @Index()
   String? supabaseId;
 
   String? petSupabaseId;
@@ -51,5 +51,7 @@ class HealthSchedule {
 
   String? frequency; // 'one-time', 'daily', 'weekly', 'monthly'
   String? notes;
+  bool isCompleted = false;
+  DateTime? completedAt;
   DateTime? createdAt;
 }

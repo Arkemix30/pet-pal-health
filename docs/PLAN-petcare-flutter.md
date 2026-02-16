@@ -70,7 +70,7 @@ lib/
 | Task ID | Name | Agent | Skills | Priority | Dependencies | INPUT→OUTPUT→VERIFY |
 |---------|------|-------|--------|----------|--------------|----------------------|
 | S-001 | Family Sharing | `database-architect` | supabase | P2 | F-001 | RLS logic for shared profiles → Invitation UI → Verify User B can see/edit Pet A updated by User A. |
-| S-002 | Health History & Export | `mobile-developer` | mobile-design | P2 | R-001 | Timeline view + PDF Export (using `pdf` package) → History screen → Verify PDF generation and sharing. |
+| S-002 | Health History & Export | `mobile-developer` | mobile-design | P2 | R-001 | ✅ Done |
 
 ---
 
