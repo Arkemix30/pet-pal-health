@@ -142,6 +142,70 @@ lib/
 
 ---
 
+## 📱 Building Android APK
+
+### Prerequisites
+
+1. **Android SDK** - Install Android Studio or command-line tools:
+   - Download from: https://developer.android.com/studio
+   - Set `ANDROID_HOME` environment variable
+   - Accept licenses: `flutter doctor --android-licenses`
+
+2. **Configure Android SDK** (if using command-line only):
+   ```bash
+   export ANDROID_HOME=$HOME/Android/Sdk
+   export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+   ```
+
+3. **Verify Setup**
+   ```bash
+   flutter doctor
+   ```
+
+### Build Commands
+
+#### Debug APK (for testing)
+```bash
+# Build debug APK
+flutter build apk --debug
+
+# Or use the shorthand
+flutter build apk
+```
+
+The debug APK will be generated at: `build/app/outputs/flutter-apk/app-debug.apk`
+
+#### Release APK (for distribution)
+```bash
+# Build release APK
+flutter build apk --release
+```
+
+The release APK will be generated at: `build/app/outputs/flutter-apk/app-release.apk`
+
+### APK Details
+
+| Type | Location | Size | Purpose |
+|------|----------|------|---------|
+| Debug | `build/app/outputs/flutter-apk/app-debug.apk` | ~30-50MB | Testing on device/emulator |
+| Release | `build/app/outputs/flutter-apk/app-release.apk` | ~15-25MB | Production distribution |
+
+### Notes
+
+- **Debug vs Release**: Release builds are optimized, minified, and signed with a debug key by default
+- **App Bundle (AAB)**: For Google Play, use `flutter build appbundle --release` instead of APK
+- **Signing**: Default debug keystore is used. For production, configure signing in `android/app/build.gradle`
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `Android SDK not found` | Set `ANDROID_HOME` environment variable |
+| `Build fails with SDK version` | Check `android/app/build.gradle` for `minSdkVersion` and `targetSdkVersion` |
+| `Signing error` | Ensure valid keystore configured in `android/app/build.gradle` |
+
+---
+
 ## 📁 Project Structure
 
 ```text
