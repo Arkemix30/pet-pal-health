@@ -26,9 +26,7 @@ class ProfileScreen extends ConsumerWidget {
       body: profileAsync.when(
         data: (profile) {
           settingsAsync.whenData((settings) {
-            ref.listen(userSettingsProvider, (previous, next) {
-              next.performFullSync();
-            });
+            // Settings loaded
           });
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -45,7 +43,8 @@ class ProfileScreen extends ConsumerWidget {
                       ProfileHeaderWidget(
                         profile: profile,
                         email: user?.email ?? '',
-                        onEditTap: () => _showEditProfileSheet(context, ref, profile),
+                        onEditTap: () =>
+                            _showEditProfileSheet(context, ref, profile),
                         onAvatarTap: () => _showAvatarPicker(context, ref),
                       ),
                       const SizedBox(height: 32),
@@ -57,7 +56,8 @@ class ProfileScreen extends ConsumerWidget {
                             icon: Icons.person_outline,
                             title: 'Edit Profile',
                             subtitle: profile?.fullName ?? 'Add your name',
-                            onTap: () => _showEditProfileSheet(context, ref, profile),
+                            onTap: () =>
+                                _showEditProfileSheet(context, ref, profile),
                           ),
                           SettingsTile(
                             icon: Icons.email_outlined,
@@ -71,8 +71,10 @@ class ProfileScreen extends ConsumerWidget {
                       _buildSectionTitle(context, 'Notifications'),
                       const SizedBox(height: 12),
                       settingsAsync.when(
-                        data: (settings) => _buildNotificationSettings(context, ref, settings),
-                        loading: () => const Center(child: CircularProgressIndicator()),
+                        data: (settings) =>
+                            _buildNotificationSettings(context, ref, settings),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
                         error: (e, _) => Text('Error: $e'),
                       ),
                       const SizedBox(height: 24),
@@ -89,12 +91,14 @@ class ProfileScreen extends ConsumerWidget {
                           SettingsTile(
                             icon: Icons.privacy_tip_outlined,
                             title: 'Privacy Policy',
-                            onTap: () => _openUrl('https://petpalhealth.com/privacy'),
+                            onTap: () =>
+                                _openUrl('https://petpalhealth.com/privacy'),
                           ),
                           SettingsTile(
                             icon: Icons.description_outlined,
                             title: 'Terms of Service',
-                            onTap: () => _openUrl('https://petpalhealth.com/terms'),
+                            onTap: () =>
+                                _openUrl('https://petpalhealth.com/terms'),
                           ),
                           SettingsTile(
                             icon: Icons.star_outline,
@@ -104,7 +108,8 @@ class ProfileScreen extends ConsumerWidget {
                           SettingsTile(
                             icon: Icons.chat_bubble_outline,
                             title: 'Contact Support',
-                            onTap: () => _openUrl('mailto:support@petpalhealth.com'),
+                            onTap: () =>
+                                _openUrl('mailto:support@petpalhealth.com'),
                           ),
                         ],
                       ),
@@ -149,7 +154,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNotificationSettings(BuildContext context, WidgetRef ref, UserSettings? settings) {
+  Widget _buildNotificationSettings(
+    BuildContext context,
+    WidgetRef ref,
+    UserSettings? settings,
+  ) {
     final s = settings ?? UserSettings();
     return SettingsSection(
       children: [
@@ -160,9 +169,9 @@ class ProfileScreen extends ConsumerWidget {
           trailing: Switch.adaptive(
             value: s.enableNotifications,
             onChanged: (value) {
-              ref.read(userSettingsProvider.notifier).updateSettings(
-                    enableNotifications: value,
-                  );
+              ref
+                  .read(userSettingsProvider.notifier)
+                  .updateSettings(enableNotifications: value);
             },
             activeColor: AppTheme.primary,
           ),
@@ -175,9 +184,9 @@ class ProfileScreen extends ConsumerWidget {
           trailing: Switch.adaptive(
             value: s.enableVaccineReminders,
             onChanged: (value) {
-              ref.read(userSettingsProvider.notifier).updateSettings(
-                    enableVaccineReminders: value,
-                  );
+              ref
+                  .read(userSettingsProvider.notifier)
+                  .updateSettings(enableVaccineReminders: value);
             },
             activeColor: AppTheme.primary,
           ),
@@ -190,9 +199,9 @@ class ProfileScreen extends ConsumerWidget {
           trailing: Switch.adaptive(
             value: s.enableMedicationReminders,
             onChanged: (value) {
-              ref.read(userSettingsProvider.notifier).updateSettings(
-                    enableMedicationReminders: value,
-                  );
+              ref
+                  .read(userSettingsProvider.notifier)
+                  .updateSettings(enableMedicationReminders: value);
             },
             activeColor: AppTheme.primary,
           ),
@@ -205,9 +214,9 @@ class ProfileScreen extends ConsumerWidget {
           trailing: Switch.adaptive(
             value: s.enableAppointmentReminders,
             onChanged: (value) {
-              ref.read(userSettingsProvider.notifier).updateSettings(
-                    enableAppointmentReminders: value,
-                  );
+              ref
+                  .read(userSettingsProvider.notifier)
+                  .updateSettings(enableAppointmentReminders: value);
             },
             activeColor: AppTheme.primary,
           ),
@@ -241,7 +250,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditProfileSheet(BuildContext context, WidgetRef ref, Profile? profile) {
+  void _showEditProfileSheet(
+    BuildContext context,
+    WidgetRef ref,
+    Profile? profile,
+  ) {
     final nameController = TextEditingController(text: profile?.fullName ?? '');
     final theme = Theme.of(context);
 
@@ -294,9 +307,9 @@ class ProfileScreen extends ConsumerWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  await ref.read(profileProvider.notifier).updateProfile(
-                        fullName: nameController.text.trim(),
-                      );
+                  await ref
+                      .read(profileProvider.notifier)
+                      .updateProfile(fullName: nameController.text.trim());
                   if (context.mounted) Navigator.pop(context);
                 },
                 child: const Text('Save Changes'),
@@ -321,9 +334,13 @@ class ProfileScreen extends ConsumerWidget {
               onTap: () async {
                 Navigator.pop(context);
                 final picker = ImagePicker();
-                final image = await picker.pickImage(source: ImageSource.camera);
+                final image = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
                 if (image != null) {
-                  await ref.read(profileProvider.notifier).uploadAvatar(image.path);
+                  await ref
+                      .read(profileProvider.notifier)
+                      .uploadAvatar(image.path);
                 }
               },
             ),
@@ -333,9 +350,13 @@ class ProfileScreen extends ConsumerWidget {
               onTap: () async {
                 Navigator.pop(context);
                 final picker = ImagePicker();
-                final image = await picker.pickImage(source: ImageSource.gallery);
+                final image = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
                 if (image != null) {
-                  await ref.read(profileProvider.notifier).uploadAvatar(image.path);
+                  await ref
+                      .read(profileProvider.notifier)
+                      .uploadAvatar(image.path);
                 }
               },
             ),

@@ -35,7 +35,24 @@ class TimelineScreen extends ConsumerWidget {
       body: schedulesAsync.when(
         data: (schedules) {
           if (schedules.isEmpty) {
-            return _buildEmptyState();
+            return RefreshIndicator(
+              onRefresh: () async {
+                final repo = ref.read(scheduleManagementProvider);
+                await repo.syncAllUnsynced();
+                await repo.fetchSchedulesFromRemote();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: constraints.maxHeight,
+                      child: _buildEmptyState(),
+                    ),
+                  );
+                },
+              ),
+            );
           }
 
           final upcoming = schedules.where((s) => !s.isCompleted).toList();
@@ -45,25 +62,33 @@ class TimelineScreen extends ConsumerWidget {
               .reversed
               .toList();
 
-          return ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              if (upcoming.isNotEmpty) ...[
-                _buildHeader('Upcoming Essentials'),
-                const SizedBox(height: 16),
-                ...upcoming.map(
-                  (s) => _TimelineTile(schedule: s, isUpcoming: true),
-                ),
-                const SizedBox(height: 32),
+          return RefreshIndicator(
+            onRefresh: () async {
+              final repo = ref.read(scheduleManagementProvider);
+              await repo.syncAllUnsynced();
+              await repo.fetchSchedulesFromRemote();
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              children: [
+                if (upcoming.isNotEmpty) ...[
+                  _buildHeader('Upcoming Essentials'),
+                  const SizedBox(height: 16),
+                  ...upcoming.map(
+                    (s) => _TimelineTile(schedule: s, isUpcoming: true),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+                if (history.isNotEmpty) ...[
+                  _buildHeader('Health History'),
+                  const SizedBox(height: 16),
+                  ...history.map(
+                    (s) => _TimelineTile(schedule: s, isUpcoming: false),
+                  ),
+                ],
               ],
-              if (history.isNotEmpty) ...[
-                _buildHeader('Health History'),
-                const SizedBox(height: 16),
-                ...history.map(
-                  (s) => _TimelineTile(schedule: s, isUpcoming: false),
-                ),
-              ],
-            ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -167,7 +192,10 @@ class _TimelineTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Row(

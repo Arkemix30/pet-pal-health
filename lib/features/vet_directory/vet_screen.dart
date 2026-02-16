@@ -26,20 +26,41 @@ class VetScreen extends ConsumerWidget {
       body: vetsAsync.when(
         data: (vets) {
           if (vets.isEmpty) {
-            return _buildEmptyState();
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(vetManagementProvider).syncVetsFromRemote();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: constraints.maxHeight,
+                      child: _buildEmptyState(),
+                    ),
+                  );
+                },
+              ),
+            );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(24),
-            itemCount: vets.length,
-            itemBuilder: (context, index) {
-              final vet = vets[index];
-              return _VetCard(
-                vet: vet,
-                onTap: () => _editVet(context, vet),
-                onDelete: () => _deleteVet(context, ref, vet),
-              ).animate().fadeIn(delay: Duration(milliseconds: index * 100));
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(vetManagementProvider).syncVetsFromRemote();
             },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              itemCount: vets.length,
+              itemBuilder: (context, index) {
+                final vet = vets[index];
+                return _VetCard(
+                  vet: vet,
+                  onTap: () => _editVet(context, vet),
+                  onDelete: () => _deleteVet(context, ref, vet),
+                ).animate().fadeIn(delay: Duration(milliseconds: index * 100));
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -77,19 +98,15 @@ class VetScreen extends ConsumerWidget {
   }
 
   void _addVet(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const VetFormScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const VetFormScreen()));
   }
 
   void _editVet(BuildContext context, Vet vet) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => VetFormScreen(vet: vet),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => VetFormScreen(vet: vet)));
   }
 
   void _deleteVet(BuildContext context, WidgetRef ref, Vet vet) {
@@ -139,7 +156,10 @@ class _VetCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Material(
@@ -179,11 +199,18 @@ class _VetCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.phone, size: 14, color: Colors.grey[600]),
+                            Icon(
+                              Icons.phone,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               vet.phone!,
-                              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -192,12 +219,19 @@ class _VetCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                            Icon(
+                              Icons.location_on,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 vet.address!,
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 13,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
