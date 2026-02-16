@@ -1,12 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final authStateProvider = StreamProvider<AuthState>((ref) {
-  return ref.watch(authServiceProvider).authStateChanges;
+  return Supabase.instance.client.auth.onAuthStateChange;
 });
 
 final userProvider = Provider<User?>((ref) {
   final authState = ref.watch(authStateProvider).value;
-  return authState?.session?.user ?? ref.watch(authServiceProvider).currentUser;
+  return authState?.session?.user;
 });
+
+final onboardingStateProvider = AsyncNotifierProvider<OnboardingNotifier, bool>(
+  () {
+    return OnboardingNotifier();
+  },
+);
+
+class OnboardingNotifier extends AsyncNotifier<bool> {
+  static const _onboardingKey = 'has_seen_onboarding';
+
+  @override
+  Future<bool> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_onboardingKey) ?? false;
+  }
+
+  Future<void> completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, true);
+    state = const AsyncData(true);
+  }
+
+  Future<void> resetOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, false);
+    state = const AsyncData(false);
+  }
+}

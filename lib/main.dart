@@ -9,11 +9,12 @@ import 'data/local/isar_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'features/auth/auth_provider.dart';
 import 'features/auth/auth_screen.dart';
-import 'features/auth/auth_service.dart';
+import 'features/auth/welcome_screen.dart';
 import 'features/pet_management/pet_dashboard_screen.dart';
 import 'features/timeline/timeline_screen.dart';
 
 import 'core/services/notification_service.dart';
+import 'core/theme/app_theme.dart';
 
 final logger = Logger();
 
@@ -64,21 +65,28 @@ class PetCareApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Pet Pal Health',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2D6A4F),
-          primary: const Color(0xFF2D6A4F),
-          secondary: const Color(0xFF74C69D),
-        ),
-        textTheme: GoogleFonts.interTextTheme(),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: authState.when(
         data: (state) {
           if (user != null) {
             return const HomeScreen();
           }
-          return const AuthScreen();
+
+          final onboardingState = ref.watch(onboardingStateProvider);
+          return onboardingState.when(
+            data: (hasSeenOnboarding) {
+              if (hasSeenOnboarding) {
+                return const AuthScreen();
+              }
+              return const WelcomeScreen();
+            },
+            loading: () => const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, st) => const AuthScreen(), // Fallback
+          );
         },
         loading: () =>
             const Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -108,47 +116,59 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _currentIndex == 0 ? 'My Pet Family' : 'Health Timeline',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          Consumer(
-            builder: (context, ref, _) {
-              return IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: () => ref.read(authServiceProvider).signOut(),
-              );
-            },
-          ),
-        ],
-      ),
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
+        height: 90,
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
+          color: theme.colorScheme.surface.withValues(alpha: 0.95),
+          border: Border(
+            top: BorderSide(
+              color: theme.dividerColor.withValues(alpha: 0.05),
+              width: 1,
             ),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(0, Icons.home_filled, 'Home'),
+            _buildNavItem(1, Icons.history, 'Timeline'),
+            _buildNavItem(2, Icons.calendar_month, 'Calendar'),
+            _buildNavItem(3, Icons.person, 'Profile'),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          selectedItemColor: theme.colorScheme.primary,
-          unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.pets), label: 'Pets'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: 'Timeline',
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _currentIndex == index;
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: () {
+        if (index < _screens.length) {
+          setState(() => _currentIndex = index);
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? theme.colorScheme.primary : Colors.grey,
+            size: 28,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              color: isSelected ? theme.colorScheme.primary : Colors.grey,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
