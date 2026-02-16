@@ -150,15 +150,143 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            // Placeholder for shared users list
-            _buildShareTile(
-              'Currently, only you have access.',
-              isPlaceholder: true,
+            StreamBuilder<List<PetShare>>(
+              stream: ref
+                  .watch(sharingRepositoryProvider)
+                  .watchSharedUsers(widget.pet.supabaseId!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final sharedUsers = snapshot.data ?? [];
+
+                if (sharedUsers.isEmpty) {
+                  return _buildShareTile(
+                    'Currently, only you have access.',
+                    isPlaceholder: true,
+                  );
+                }
+
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: sharedUsers.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final user = sharedUsers[index];
+                    return _buildSharedUserTile(user);
+                  },
+                );
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSharedUserTile(PetShare share) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: const Color(0xFF2D6A4F).withValues(alpha: 0.1),
+            child: Text(
+              (share.sharedWithEmail?.isNotEmpty == true)
+                  ? share.sharedWithEmail![0].toUpperCase()
+                  : '?',
+              style: const TextStyle(
+                color: Color(0xFF2D6A4F),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  share.sharedWithEmail ?? 'Unknown',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  share.accessLevel == 'editor' ? 'Can edit' : 'View only',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.remove_circle_outline,
+              color: Colors.red,
+            ),
+            onPressed: () => _confirmRevoke(share),
+            tooltip: 'Revoke access',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmRevoke(PetShare share) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Revoke Access'),
+        content: Text(
+          'Are you sure you want to remove ${share.sharedWithEmail} from accessing ${widget.pet.name}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _revokeAccess(share);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Revoke'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _revokeAccess(PetShare share) async {
+    try {
+      await ref
+          .read(sharingRepositoryProvider)
+          .revokeAccess(share.supabaseId!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Access revoked')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildShareTile(String title, {bool isPlaceholder = false}) {
