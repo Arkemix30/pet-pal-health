@@ -7,7 +7,12 @@ import 'schedule_provider.dart';
 
 class AddScheduleScreen extends ConsumerStatefulWidget {
   final String petSupabaseId;
-  const AddScheduleScreen({super.key, required this.petSupabaseId});
+  final String? initialType;
+  const AddScheduleScreen({
+    super.key,
+    required this.petSupabaseId,
+    this.initialType,
+  });
 
   @override
   ConsumerState<AddScheduleScreen> createState() => _AddScheduleScreenState();
@@ -18,10 +23,16 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
 
-  String _selectedType = 'vaccine';
+  late String _selectedType;
   String _selectedFrequency = 'one-time';
   DateTime _startDate = DateTime.now();
   TimeOfDay _startTime = const TimeOfDay(hour: 09, minute: 00);
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedType = widget.initialType ?? 'vaccine';
+  }
 
   final List<Map<String, dynamic>> _types = [
     {'id': 'vaccine', 'label': 'Vaccine', 'icon': Icons.vaccines},
