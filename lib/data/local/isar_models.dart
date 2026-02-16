@@ -56,3 +56,53 @@ class HealthSchedule {
   DateTime? completedAt;
   DateTime? createdAt;
 }
+
+@collection
+class PetShare {
+  Id id = Isar.autoIncrement;
+
+  @Index()
+  String? supabaseId;
+
+  @Index()
+  String? petSupabaseId;
+
+  String? sharedWithEmail;
+  String? accessLevel; // 'editor', 'viewer'
+  String? status; // 'pending', 'accepted', 'revoked'
+  DateTime? createdAt;
+}
+
+@collection
+class Vet {
+  Id id = Isar.autoIncrement;
+
+  @Index()
+  String? supabaseId;
+
+  String? ownerId;
+
+  late String name;
+  String? phone;
+  String? address;
+  String? notes;
+  bool isDeleted = false;
+  DateTime? createdAt;
+}
+
+@collection
+class UserSettings {
+  Id id = Isar.autoIncrement;
+
+  @Index()
+  String? supabaseId;
+
+  String? ownerId;
+
+  bool enableNotifications = true;
+  bool enableVaccineReminders = true;
+  bool enableMedicationReminders = true;
+  bool enableAppointmentReminders = true;
+  int reminderHoursBefore = 24;
+  DateTime? updatedAt;
+}

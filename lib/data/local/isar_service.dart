@@ -14,6 +14,9 @@ class IsarService {
       PetSchema,
       ProfileSchema,
       HealthScheduleSchema,
+      PetShareSchema,
+      VetSchema,
+      UserSettingsSchema,
     ], directory: dir.path);
   }
 }
