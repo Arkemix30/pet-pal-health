@@ -75,35 +75,95 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
   }) async {
-    // Prevent scheduling in the past
     if (scheduledDate.isBefore(DateTime.now())) return;
 
-    await _notificationsPlugin.zonedSchedule(
-      id: id,
-      title: title,
-      body: body,
-      scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          channelId,
-          channelName,
-          channelDescription: channelDescription,
-          importance: Importance.max,
-          priority: Priority.high,
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            channelDescription: channelDescription,
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+          linux: LinuxNotificationDetails(defaultActionName: 'Open notification'),
         ),
-        iOS: DarwinNotificationDetails(),
-        linux: LinuxNotificationDetails(defaultActionName: 'Open notification'),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    } on UnimplementedError {
+      // zonedSchedule not supported on Linux - notifications will only work on Android/iOS
+      return;
+    }
   }
 
   Future<void> cancelNotification(int id) async {
-    // v20 API uses named argument 'id' for cancel
     await _notificationsPlugin.cancel(id: id);
   }
 
   Future<void> cancelAllNotifications() async {
     await _notificationsPlugin.cancelAll();
+  }
+
+  Future<void> scheduleRecurringNotification({
+    required int baseId,
+    required String title,
+    required String body,
+    required DateTime startDate,
+    required String frequency,
+  }) async {
+    if (frequency == 'one-time' || frequency.isEmpty) {
+      await scheduleNotification(
+        id: baseId,
+        title: title,
+        body: body,
+        scheduledDate: startDate,
+      );
+      return;
+    }
+
+    DateTime current = startDate;
+    int notificationId = baseId;
+    const int maxNotifications = 30;
+    int count = 0;
+
+    while (current.isBefore(DateTime.now().add(const Duration(days: 60))) && count < maxNotifications) {
+      if (current.isAfter(DateTime.now())) {
+        await scheduleNotification(
+          id: notificationId,
+          title: title,
+          body: body,
+          scheduledDate: current,
+        );
+      }
+
+      switch (frequency) {
+        case 'daily':
+          current = current.add(const Duration(days: 1));
+          break;
+        case 'weekly':
+          current = current.add(const Duration(days: 7));
+          break;
+        case 'monthly':
+          current = DateTime(current.year, current.month + 1, current.day);
+          break;
+        default:
+          current = current.add(const Duration(days: 1));
+      }
+      
+      notificationId++;
+      count++;
+    }
+  }
+
+  Future<void> cancelRecurringNotifications(int baseId, {int maxNotifications = 30}) async {
+    for (int i = 0; i < maxNotifications; i++) {
+      await _notificationsPlugin.cancel(id: baseId + i);
+    }
   }
 }

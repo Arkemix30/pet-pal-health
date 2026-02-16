@@ -6,12 +6,10 @@ import 'auth_provider.dart';
 import 'auth_screen.dart';
 
 class WelcomeScreen extends ConsumerWidget {
-  // Changed to ConsumerWidget
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Added WidgetRef ref
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -19,7 +17,6 @@ class WelcomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header / Logo Area
             Padding(
               padding: const EdgeInsets.only(top: 24, bottom: 16),
               child: Row(
@@ -51,8 +48,6 @@ class WelcomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // Hero Illustration Area
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -77,7 +72,6 @@ class WelcomeScreen extends ConsumerWidget {
                                     end: const Offset(1.0, 1.0),
                                     curve: Curves.easeOut,
                                   ),
-                              // Gradients
                               DecoratedBox(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -100,7 +94,6 @@ class WelcomeScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      // Vaccine Tag Overlay
                       Positioned(
                         top: 24,
                         right: 24,
@@ -166,8 +159,6 @@ class WelcomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
-            // Text Content
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
@@ -206,8 +197,6 @@ class WelcomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // Indicators
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),
               child: Row(
@@ -242,8 +231,6 @@ class WelcomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // Action Buttons
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: Column(
@@ -262,17 +249,7 @@ class WelcomeScreen extends ConsumerWidget {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                        ref
-                            .read(onboardingStateProvider.notifier)
-                            .completeOnboarding(); // Added line
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const AuthScreen(initialIsLogin: false),
-                          ),
-                        );
-                      },
+                      onPressed: () => _handleContinue(context, ref, false),
                       child: const Text('Create Account'),
                     ),
                   ),
@@ -281,17 +258,7 @@ class WelcomeScreen extends ConsumerWidget {
                     width: double.infinity,
                     height: 56,
                     child: TextButton(
-                      onPressed: () {
-                        ref
-                            .read(onboardingStateProvider.notifier)
-                            .completeOnboarding(); // Added line
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const AuthScreen(initialIsLogin: true),
-                          ),
-                        );
-                      },
+                      onPressed: () => _handleContinue(context, ref, true),
                       style: TextButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -324,5 +291,65 @@ class WelcomeScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleContinue(BuildContext context, WidgetRef ref, bool isLogin) async {
+    final hasAccepted = await ref.read(onboardingStateProvider.notifier).hasAcceptedDisclaimer();
+    
+    if (!hasAccepted && context.mounted) {
+      final accepted = await _showDisclaimerDialog(context);
+      if (!accepted) return;
+      await ref.read(onboardingStateProvider.notifier).acceptDisclaimer();
+    }
+
+    await ref.read(onboardingStateProvider.notifier).completeOnboarding();
+    
+    if (context.mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => AuthScreen(initialIsLogin: isLogin),
+        ),
+      );
+    }
+  }
+
+  Future<bool> _showDisclaimerDialog(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(width: 8),
+            const Text('Medical Disclaimer'),
+          ],
+        ),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Pet Pal Health is intended for informational purposes only.\n\n'
+            'This app does not replace professional veterinary care. '
+            'Always consult with a qualified veterinarian for medical advice, '
+            'diagnosis, or treatment.\n\n'
+            'The developers of this app are not responsible for any health '
+            'issues that may arise from relying solely on the information '
+            'provided by this application.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Decline'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('I Understand'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 }
