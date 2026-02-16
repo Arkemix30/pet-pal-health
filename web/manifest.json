@@ -1,6 +1,6 @@
 {
-    "name": "pet_pal_health",
-    "short_name": "pet_pal_health",
+    "name": "Pet Pal Health",
+    "short_name": "Pet Pal Health",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -26,26 +26,37 @@ class PetRepository {
         .watch(fireImmediately: true);
   }
 
+  // Watch a specific pet by local ID
+  Stream<Pet?> watchPet(int id) {
+    return _isar.pets.watchObject(id, fireImmediately: true);
+  }
+
   Future<void> savePet(Pet pet) async {
-    // 1. Save to Local Isar
+    // 1. Mark as unsynced and save to Local Isar
+    pet.isSynced = false;
     await _isar.writeTxn(() async {
       await _isar.pets.put(pet);
     });
 
     // 2. Sync to Supabase
-    _syncPetToRemote(pet);
+    try {
+      await _syncPetToRemote(pet);
+    } catch (e) {
+      // If sync fails, it stays in Isar as isSynced = false
+      // UI will handle the error feedback
+      rethrow;
+    }
   }
 
   Future<void> _syncPetToRemote(Pet pet) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
 
       if (pet.ownerId == null) {
         pet.ownerId = userId;
-        await _isar.writeTxn(() async {
-          await _isar.pets.put(pet);
-        });
       }
 
       final data = {
@@ -60,22 +71,35 @@ class PetRepository {
       };
 
       if (pet.supabaseId != null) {
-        await _supabase.from('pets').update(data).eq('id', pet.supabaseId!);
+        final res = await _supabase
+            .from('pets')
+            .update(data)
+            .eq('id', pet.supabaseId!)
+            .select()
+            .single();
+        pet.updatedAt = DateTime.tryParse(res['updated_at'] ?? '');
       } else {
         final res = await _supabase.from('pets').insert(data).select().single();
         pet.supabaseId = res['id'];
-        await _isar.writeTxn(() async {
-          await _isar.pets.put(pet);
-        });
+        pet.ownerId = userId;
+        pet.updatedAt = DateTime.tryParse(res['updated_at'] ?? '');
       }
+
+      // Mark as synced and update local
+      pet.isSynced = true;
+      await _isar.writeTxn(() async {
+        await _isar.pets.put(pet);
+      });
     } catch (e) {
       print('Sync failed for pet ${pet.name}: $e');
+      rethrow; // Rethrow to allow UI to handle error
     }
   }
 
   /// Soft deletes a pet by marking it as deleted.
   Future<void> softDeletePet(Pet pet) async {
     pet.isDeleted = true;
+    pet.isSynced = false;
 
     // 1. Update locally
     await _isar.writeTxn(() async {
@@ -83,7 +107,12 @@ class PetRepository {
     });
 
     // 2. Sync deletion to remote
-    _syncPetToRemote(pet);
+    try {
+      await _syncPetToRemote(pet);
+    } catch (e) {
+      print('Soft delete sync failed: $e');
+      rethrow;
+    }
   }
 
   /// Permanent delete (optional, can be used to clean up storage)
@@ -114,9 +143,20 @@ class PetRepository {
 
   /// Finds all pets that haven't been synced to Supabase yet and syncs them.
   Future<void> syncAllUnsynced() async {
-    final unsyncedPets = await _isar.pets.filter().supabaseIdIsNull().findAll();
+    // Sync both completely new pets and existing pets with local changes
+    final unsyncedPets = await _isar.pets
+        .filter()
+        .supabaseIdIsNull()
+        .or()
+        .isSyncedEqualTo(false)
+        .findAll();
+
     for (final pet in unsyncedPets) {
-      await _syncPetToRemote(pet);
+      try {
+        await _syncPetToRemote(pet);
+      } catch (e) {
+        print('Automated sync retry failed for ${pet.name}: $e');
+      }
     }
   }
 
@@ -140,6 +180,12 @@ class PetRepository {
               .supabaseIdEqualTo(supabaseId)
               .findFirst();
 
+          // CRITICAL: If the local record is "dirty" (unsynced changes),
+          // do NOT overwrite it with remote data to avoid data loss.
+          if (existingPet != null && !existingPet.isSynced) {
+            continue;
+          }
+
           final pet = existingPet ?? Pet();
           pet.supabaseId = supabaseId;
           pet.ownerId = data['owner_id'];
@@ -155,6 +201,9 @@ class PetRepository {
           pet.createdAt = data['created_at'] != null
               ? DateTime.tryParse(data['created_at'])
               : DateTime.now();
+          pet.updatedAt = data['updated_at'] != null
+              ? DateTime.tryParse(data['updated_at'])
+              : null;
 
           await _isar.pets.put(pet);
         }

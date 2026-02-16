@@ -115,15 +115,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Colors.black.withOpacity(0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: ClipOval(
-                            child: Image.network(
-                              'https://lh3.googleusercontent.com/aida-public/AB6AXuDaaTnAI7TZyR1PYgB5rf_p-LtT6SM0KMM4UKpvOTcsLGhXDkskskzuw_CTioNXSoEI2363sWEzrQiD8VsRsTj8fB1TRNcK-kmdgkFRksQevjSoC6W9bgQyhBbGntG-QC5-CelwNMpSpu3dgIQ4ETuzDr4iymIumjGe-97XfVdqXIMjSWAyEF0meSw0-omqMF6dkvjIt509c34uBQMFliEYdnn02O7UuHMHo5YCBaOwBGpyBI7Nz9_uN2QoqzoIL-rAuNZiWLe39as',
+                            child: Image.asset(
+                              'assets/images/app_icon.png',
                               fit: BoxFit.cover,
                             ),
                           ),

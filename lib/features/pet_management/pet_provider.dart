@@ -19,3 +19,8 @@ final petsStreamProvider = StreamProvider<List<Pet>>((ref) async* {
 final petManagementProvider = Provider((ref) {
   return ref.watch(petRepositoryProvider);
 });
+
+final singlePetStreamProvider = StreamProvider.family<Pet?, int>((ref, id) {
+  final repo = ref.watch(petRepositoryProvider);
+  return repo.watchPet(id);
+});

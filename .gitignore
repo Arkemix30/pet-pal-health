@@ -52,3 +52,189 @@ app.*.map.json
 
 
 .stitch_assets
+
+
+
+###############################################################################
+# Flutter / Dart
+###############################################################################
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+doc/api/
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-version
+.metadata
+
+# Dart compiled output
+*.dart.js
+*.dart.js.deps
+*.dart.js.map
+*.dart.js.tar.gz
+*.dill
+*.js
+*.js.map
+
+# Pub lock (keep it for apps, ignore for packages)
+# For Flutter apps, you SHOULD commit pubspec.lock.
+# Uncomment the next line ONLY if this is a library/package.
+# pubspec.lock
+
+###############################################################################
+# Android
+###############################################################################
+android/.gradle/
+android/local.properties
+android/key.properties
+android/**/GeneratedPluginRegistrant.java
+android/**/build/
+android/**/.cxx/
+android/**/.idea/
+android/**/captures/
+android/**/.settings/
+android/**/.project
+android/**/.classpath
+android/**/gradle.properties.bak
+android/**/keystore.jks
+android/**/keystore.properties
+
+# APK / AAB outputs
+*.apk
+*.aab
+
+###############################################################################
+# iOS / macOS (Xcode)
+###############################################################################
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/App.framework
+ios/Flutter/engine/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/.last_build_id
+ios/Runner/GeneratedPluginRegistrant.*
+
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/GeneratedPluginRegistrant.*
+
+# Xcode user settings
+*.xcuserstate
+*.xcuserdata/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+###############################################################################
+# Web
+###############################################################################
+web/.dart_tool/
+web/build/
+web/.flutter-plugins
+web/.flutter-plugins-dependencies
+
+###############################################################################
+# Windows
+###############################################################################
+windows/flutter/ephemeral/
+windows/**/GeneratedPluginRegistrant.*
+windows/**/build/
+
+###############################################################################
+# Linux
+###############################################################################
+linux/flutter/ephemeral/
+linux/**/GeneratedPluginRegistrant.*
+linux/**/build/
+
+###############################################################################
+# IntelliJ / Android Studio
+###############################################################################
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+###############################################################################
+# VS Code
+###############################################################################
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+###############################################################################
+# Logs
+###############################################################################
+*.log
+
+###############################################################################
+# OS files
+###############################################################################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+###############################################################################
+# Environment files (VERY IMPORTANT)
+###############################################################################
+.env
+.env.*
+!.env.example
+
+###############################################################################
+# Firebase / Google Services (optional)
+###############################################################################
+# If you want to keep them private, ignore:
+# android/app/google-services.json
+# ios/Runner/GoogleService-Info.plist
+
+###############################################################################
+# Secrets / Keys / Signing
+###############################################################################
+*.jks
+*.keystore
+*.p12
+*.pem
+*.der
+*.crt
+*.key
+*.mobileprovision
+*.cer
+
+###############################################################################
+# Fastlane (optional)
+###############################################################################
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+###############################################################################
+# Crashlytics / Debug symbols (optional)
+###############################################################################
+# If you use --split-debug-info, you may want to ignore the folder:
+build/debug-info/

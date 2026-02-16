@@ -32,7 +32,9 @@ class Pet {
   double? weightKg;
   String? photoUrl;
   bool isDeleted = false;
+  bool isSynced = true;
   DateTime? createdAt;
+  DateTime? updatedAt;
 }
 
 @collection
@@ -55,6 +57,7 @@ class HealthSchedule {
   bool isCompleted = false;
   DateTime? completedAt;
   DateTime? createdAt;
+  DateTime? updatedAt;
 }
 
 @collection
@@ -88,6 +91,7 @@ class Vet {
   String? notes;
   bool isDeleted = false;
   DateTime? createdAt;
+  DateTime? updatedAt;
 }
 
 @collection

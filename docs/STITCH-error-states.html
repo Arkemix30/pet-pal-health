@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PetCare Brain Dashboard - Error States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#19e65e",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#112116",
+                        "error-red": "#ff4d4d",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .glass-effect {
+            backdrop-filter: blur(8px);
+            background-color: rgba(17, 33, 22, 0.8);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-white font-display overflow-hidden">
+<!-- Main Dashboard Background (Blurred to focus on UI Errors) -->
+<div class="relative flex h-screen w-full flex-col bg-background-light dark:bg-background-dark opacity-50 pointer-events-none">
+<!-- Header -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-primary/10">
+<div class="text-white flex size-12 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined text-primary">menu</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">PetCare Dashboard</h2>
+<div class="size-12"></div>
+</div>
+<!-- Dashboard Content -->
+<div class="flex flex-col gap-4 p-4">
+<!-- Sync Status -->
+<div class="flex items-center gap-2 px-2 py-1">
+<span class="material-symbols-outlined text-error-red text-sm">sync_problem</span>
+<p class="text-error-red text-xs font-medium">Last synced: 2 hours ago</p>
+</div>
+<!-- Stats -->
+<div class="flex flex-wrap gap-4">
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-primary/20 bg-primary/5">
+<p class="text-white/70 text-sm font-medium leading-normal uppercase tracking-wider">Daily Activity</p>
+<p class="text-white tracking-light text-2xl font-bold leading-tight">85%</p>
+<p class="text-primary text-base font-medium leading-normal">+5%</p>
+</div>
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-primary/20 bg-primary/5">
+<p class="text-white/70 text-sm font-medium leading-normal uppercase tracking-wider">Sleep Quality</p>
+<p class="text-white tracking-light text-2xl font-bold leading-tight">Good</p>
+<p class="text-error-red text-base font-medium leading-normal">-2%</p>
+</div>
+</div>
+<!-- Pets Section -->
+<h2 class="text-white text-[20px] font-bold leading-tight tracking-[-0.015em] pt-4">Your Pets</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-3 text-center bg-primary/5 p-4 rounded-xl border border-primary/10">
+<div class="px-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-full border-2 border-primary/30" data-alt="Golden Retriever dog portrait circle thumbnail" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAB4krHynqiZ3LxaJEl-SoqIcZk3niUGucDJX-H_tXzTxL3xMHzl0LJZ4st8IIzm5gFwETpAUn0ekw0tWacTSXwx367WNcWIkg-VrSf6Sie_nIOpJ0eUo4tBs5hg02Ekoxblu1Yno2qJ8fYkOmmzQdhgmnUuPhVzRwguKX2xq2_f4vNwDnD-A4SGNMayGJy4HrOF90j7rukn3ljE1Wxzwpa7WI1cvJa1hQ7ZpbSN028Y0qznjGtCskuUckMFMx4VyrCF-C2bs34vH4");'></div>
+</div>
+<div>
+<p class="text-white text-base font-bold leading-normal">Luna</p>
+<p class="text-primary/70 text-xs font-normal leading-normal">Golden Retriever</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 text-center bg-primary/5 p-4 rounded-xl border border-primary/10">
+<div class="px-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-full border-2 border-primary/30" data-alt="Maine Coon cat portrait circle thumbnail" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDSLMqRFv5A2AB8Zgh1clZh9SPUJ3l_9pqgdjy4uBOtsnrhZ9vxzzyJI5ppu7v1m0F9jm22T9aBxZk-4jXSr44D1MMTvky9Ckq5T68SUDmNuC6eqidmMhVBOsvojinlR8TToYFq12V9ALHXmgmMRDCgD2HA9N42Qek4eOGjmLYpUCFOlKtmtbbIj-PFgofj36_HuJno_vEencTwV2yxl4kCSb7EAALXOJUgvUMAFo3vJ6gcvtkD17NgiMuRCXRV5yoQdTzwmvRSlDY");'></div>
+</div>
+<div>
+<p class="text-white text-base font-bold leading-normal">Max</p>
+<p class="text-primary/70 text-xs font-normal leading-normal">Maine Coon</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Spacer -->
+<div class="mt-auto border-t border-primary/10 bg-background-dark px-4 pb-3 pt-2 flex justify-between">
+<div class="flex flex-col items-center gap-1 flex-1 opacity-40">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px]">Home</span>
+</div>
+<div class="flex flex-col items-center gap-1 flex-1 opacity-40">
+<span class="material-symbols-outlined">pets</span>
+<span class="text-[10px]">Pets</span>
+</div>
+<div class="flex flex-col items-center gap-1 flex-1 opacity-40">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="text-[10px]">Health</span>
+</div>
+<div class="flex flex-col items-center gap-1 flex-1 opacity-40">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px]">Settings</span>
+</div>
+</div>
+</div>
+<!-- UI Overlay Layer: Errors & Toasts -->
+<div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-6 z-50">
+<!-- Top Floating Toast -->
+<div class="pointer-events-auto mt-12 w-full max-w-sm">
+<div class="flex items-center gap-3 bg-[#1a2e21] border-l-4 border-error-red rounded-lg p-4 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+<div class="flex items-center justify-center size-8 rounded-full bg-error-red/10 text-error-red">
+<span class="material-symbols-outlined text-[20px]">error</span>
+</div>
+<div class="flex-1">
+<p class="text-white text-sm font-medium">Something went wrong. Please try again.</p>
+</div>
+<button class="text-white/40 hover:text-white">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<!-- Bottom Snackbar Toast -->
+<div class="pointer-events-auto w-full max-w-md">
+<div class="bg-[#0f1d14] border border-white/5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-4 flex items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="relative flex size-5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-error-red opacity-20"></span>
+<span class="material-symbols-outlined text-error-red text-[20px] relative">wifi_off</span>
+</div>
+<p class="text-white text-sm font-medium leading-tight">Unable to sync. Please check your connection.</p>
+</div>
+<button class="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors border border-primary/20">
+                    Retry
+                </button>
+</div>
+</div>
+</div>
+<!-- Screen Edge Effects -->
+<div class="absolute inset-x-0 bottom-0 h-1 bg-primary/20 pointer-events-none"></div>
+</body></html>

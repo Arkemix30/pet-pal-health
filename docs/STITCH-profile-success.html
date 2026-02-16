@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PetCare Brain - Profile Updated</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#19e65e",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#112116",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white overflow-hidden">
+<div class="relative flex h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
+<!-- Header -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-white/5">
+<div class="text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10 cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 ml-4">Add Pet Profile</h2>
+<div class="size-10"></div>
+</div>
+<!-- Content Area (Blurred Background to simulate modal focus) -->
+<div class="flex-1 overflow-y-auto filter blur-sm">
+<div class="flex p-6 @container">
+<div class="flex w-full flex-col gap-6 items-center">
+<div class="flex gap-4 flex-col items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-32 w-32 border-4 border-primary/20" data-alt="Golden Retriever dog profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDmpvzYyBAPEBz3vsy3x46xcOXkB0yMjRpFqmWZ-JYRwAVaJpP-UKS0aoj9i9wO4iOxpzBSfBEL7mIC-L__e6neFRn2ltmErbUNIGD37mh4kiFFhWonYlzn8eAay8MfKXSx5THL_IgsasHNkFWfElV7hBb5QDWyxF3ZpMqgVfqoFBYwBRGGv_Gheetk6DK8ySEA4zcfMhGRRi5rgNgae5Ugf-OIarpJqTxeYtTwkUTQpynmiB-Nl2tKNXwKtmPIjeXn_aYwHvhodV4");'></div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-white text-[24px] font-extrabold leading-tight tracking-[-0.015em] text-center">Lucky</p>
+<p class="text-primary text-base font-medium leading-normal text-center">Golden Retriever, 2 years old</p>
+</div>
+</div>
+</div>
+</div>
+<div class="px-6 space-y-6">
+<div>
+<h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] pb-4">Pet Information</h3>
+<div class="flex flex-col gap-4">
+<label class="flex flex-col w-full">
+<p class="text-white/70 text-sm font-medium leading-normal pb-2">Pet Name</p>
+<div class="relative">
+<input class="form-input flex w-full rounded-xl text-white border border-white/10 bg-white/5 h-14 p-4 text-base font-normal focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" value="Lucky"/>
+</div>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-white/70 text-sm font-medium leading-normal pb-2">Breed</p>
+<div class="relative">
+<input class="form-input flex w-full rounded-xl text-white border border-white/10 bg-white/5 h-14 p-4 text-base font-normal focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" value="Golden Retriever"/>
+</div>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-white/70 text-sm font-medium leading-normal pb-2">Age (Years)</p>
+<div class="relative">
+<input class="form-input flex w-full rounded-xl text-white border border-white/10 bg-white/5 h-14 p-4 text-base font-normal focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" value="2"/>
+</div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Success Modal Overlay -->
+<div class="absolute inset-0 z-50 flex items-center justify-center p-6 bg-background-dark/80 backdrop-blur-md">
+<div class="w-full max-w-sm bg-[#1a3222] border border-primary/30 rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl">
+<!-- Success Icon -->
+<div class="size-20 bg-primary rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(25,230,94,0.4)]">
+<span class="material-symbols-outlined text-background-dark text-5xl font-bold">check</span>
+</div>
+<!-- Success Message -->
+<h2 class="text-2xl font-extrabold text-white mb-2">Profile Updated</h2>
+<p class="text-white/70 text-base leading-relaxed mb-8">
+                    Lucky's information has been successfully saved to your profile.
+                </p>
+<!-- Action Button -->
+<button class="w-full bg-primary hover:bg-primary/90 text-background-dark font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg">
+                    Awesome!
+                </button>
+<button class="mt-4 text-white/50 hover:text-white text-sm font-medium transition-colors">
+                    Back to Profile
+                </button>
+</div>
+</div>
+<!-- Bottom Navigation Bar (Hidden behind modal for UI context) -->
+<div class="flex gap-2 border-t border-white/10 bg-background-light dark:bg-background-dark px-4 pb-8 pt-3 mt-auto">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">pets</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Pets</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<span class="material-symbols-outlined">ecg_heart</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Health</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Profile</p>
+</a>
+</div>
+</div>
+</body></html>

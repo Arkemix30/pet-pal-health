@@ -9,6 +9,7 @@ import '../sharing/sharing_screen.dart';
 import '../pet_management/pet_form_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../pet_management/pet_history_screen.dart';
+import '../pet_management/pet_provider.dart';
 
 class PetDetailsScreen extends ConsumerWidget {
   final Pet pet;
@@ -16,98 +17,114 @@ class PetDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final schedulesAsync = ref.watch(
-      petSchedulesProvider(pet.supabaseId ?? ''),
-    );
+    final petAsync = ref.watch(singlePetStreamProvider(pet.id));
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Pet Profile',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => PetFormScreen(initialPet: pet)),
+    return petAsync.when(
+      data: (updatedPet) {
+        final currentPet = updatedPet ?? pet;
+        final schedulesAsync = ref.watch(
+          petSchedulesProvider(currentPet.supabaseId ?? ''),
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              'Pet Profile',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () {
-              if (pet.supabaseId == null) return;
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => SharingScreen(pet: pet)),
-              );
-            },
-          ),
-        ],
-      ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _buildProfileHeader(context),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 24,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatsGrid(context),
-                      const SizedBox(height: 32),
-                      _buildSectionHeader(
-                        context,
-                        'Up Next',
-                        trailing: Text(
-                          'See Calendar',
-                          style: GoogleFonts.outfit(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      schedulesAsync.when(
-                        data: (schedules) {
-                          final upcoming = schedules
-                              .where((s) => !s.isCompleted)
-                              .toList();
-                          return _buildTimeline(context, upcoming, ref);
-                        },
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (e, _) => Text('Error: $e'),
-                      ),
-                      const SizedBox(height: 32),
-                      _buildSectionHeader(context, 'Quick Actions'),
-                      const SizedBox(height: 16),
-                      _buildQuickActions(context),
-                      const SizedBox(height: 100),
-                    ],
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PetFormScreen(initialPet: currentPet),
                   ),
                 ),
-              ],
-            ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.share_outlined),
+                onPressed: () {
+                  if (currentPet.supabaseId == null) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SharingScreen(pet: currentPet),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToAddSchedule(context),
-        backgroundColor: theme.colorScheme.primary,
-        child: const Icon(Icons.add, color: Colors.black, size: 30),
-      ).animate().scale(curve: Curves.easeOutBack),
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildProfileHeader(context, currentPet),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildStatsGrid(context, currentPet),
+                          const SizedBox(height: 32),
+                          _buildSectionHeader(
+                            context,
+                            'Up Next',
+                            trailing: Text(
+                              'See Calendar',
+                              style: GoogleFonts.outfit(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          schedulesAsync.when(
+                            data: (schedules) {
+                              final upcoming = schedules
+                                  .where((s) => !s.isCompleted)
+                                  .toList();
+                              return _buildTimeline(context, upcoming, ref);
+                            },
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            error: (e, _) => Text('Error: $e'),
+                          ),
+                          const SizedBox(height: 32),
+                          _buildSectionHeader(context, 'Quick Actions'),
+                          const SizedBox(height: 16),
+                          _buildQuickActions(context, currentPet),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _navigateToAddSchedule(context, currentPet),
+            backgroundColor: theme.colorScheme.primary,
+            child: const Icon(Icons.add, color: Colors.black, size: 30),
+          ).animate().scale(curve: Curves.easeOutBack),
+        );
+      },
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) =>
+          Scaffold(body: Center(child: Text('Error loading pet: $e'))),
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
+  Widget _buildProfileHeader(BuildContext context, Pet currentPet) {
     final theme = Theme.of(context);
     return Column(
       children: [
@@ -125,14 +142,16 @@ class PetDetailsScreen extends ConsumerWidget {
                     color: theme.dividerColor.withValues(alpha: 0.1),
                     width: 4,
                   ),
-                  image: pet.photoUrl != null
+                  image: currentPet.photoUrl != null
                       ? DecorationImage(
-                          image: CachedNetworkImageProvider(pet.photoUrl!),
+                          image: CachedNetworkImageProvider(
+                            currentPet.photoUrl!,
+                          ),
                           fit: BoxFit.cover,
                         )
                       : null,
                 ),
-                child: pet.photoUrl == null
+                child: currentPet.photoUrl == null
                     ? Icon(
                         Icons.pets,
                         size: 60,
@@ -153,7 +172,7 @@ class PetDetailsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
         Text(
-          pet.name,
+          currentPet.name,
           style: GoogleFonts.outfit(
             fontSize: 32,
             fontWeight: FontWeight.w900,
@@ -162,7 +181,7 @@ class PetDetailsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${_formatAge(pet.birthDate)} • ${pet.breed ?? pet.species}',
+          '${_formatAge(currentPet.birthDate)} • ${currentPet.breed ?? currentPet.species}',
           style: GoogleFonts.firaSans(
             fontSize: 16,
             color: Colors.grey,
@@ -200,14 +219,14 @@ class PetDetailsScreen extends ConsumerWidget {
     ).animate().fadeIn().slideY(begin: 0.1);
   }
 
-  Widget _buildStatsGrid(BuildContext context) {
+  Widget _buildStatsGrid(BuildContext context, Pet currentPet) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
             context,
             'WEIGHT',
-            '${pet.weightKg ?? 0}',
+            '${currentPet.weightKg ?? 0}',
             'kg',
             status: 'Stable',
             icon: Icons.monitor_weight_outlined,
@@ -510,7 +529,7 @@ class PetDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActions(BuildContext context, Pet currentPet) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -523,27 +542,32 @@ class PetDetailsScreen extends ConsumerWidget {
           context,
           Icons.vaccines_outlined,
           'Log\nVaccine',
-          onTap: () => _navigateToAddSchedule(context, type: 'vaccine'),
+          onTap: () =>
+              _navigateToAddSchedule(context, currentPet, type: 'vaccine'),
         ),
         _buildActionItem(
           context,
           Icons.medical_services_outlined,
           'Add\nMeds',
-          onTap: () => _navigateToAddSchedule(context, type: 'medication'),
+          onTap: () =>
+              _navigateToAddSchedule(context, currentPet, type: 'medication'),
         ),
         _buildActionItem(
           context,
           Icons.calendar_month_outlined,
           'Book\nVet',
-          onTap: () => _navigateToAddSchedule(context, type: 'appointment'),
+          onTap: () =>
+              _navigateToAddSchedule(context, currentPet, type: 'appointment'),
         ),
         _buildActionItem(
           context,
           Icons.history,
           'View\nHistory',
-          onTap: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => PetHistoryScreen(pet: pet))),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => PetHistoryScreen(pet: currentPet),
+            ),
+          ),
         ),
       ],
     );
@@ -623,8 +647,12 @@ class PetDetailsScreen extends ConsumerWidget {
     );
   }
 
-  void _navigateToAddSchedule(BuildContext context, {String? type}) {
-    if (pet.supabaseId == null) {
+  void _navigateToAddSchedule(
+    BuildContext context,
+    Pet currentPet, {
+    String? type,
+  }) {
+    if (currentPet.supabaseId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please wait for sync to complete')),
       );
@@ -633,7 +661,7 @@ class PetDetailsScreen extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AddScheduleScreen(
-          petSupabaseId: pet.supabaseId!,
+          petSupabaseId: currentPet.supabaseId!,
           initialType: type,
         ),
       ),

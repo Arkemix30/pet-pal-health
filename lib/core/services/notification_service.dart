@@ -20,8 +20,8 @@ class NotificationService {
     // 1. Initialize timezones
     tz.initializeTimeZones();
     try {
-      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      final timeZoneInfo = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
     } catch (e) {
       // Fallback to UTC if local timezone cannot be detected (common on some Linux environments)
       tz.setLocalLocation(tz.getLocation('UTC'));
@@ -92,7 +92,9 @@ class NotificationService {
             priority: Priority.high,
           ),
           iOS: DarwinNotificationDetails(),
-          linux: LinuxNotificationDetails(defaultActionName: 'Open notification'),
+          linux: LinuxNotificationDetails(
+            defaultActionName: 'Open notification',
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
@@ -132,7 +134,8 @@ class NotificationService {
     const int maxNotifications = 30;
     int count = 0;
 
-    while (current.isBefore(DateTime.now().add(const Duration(days: 60))) && count < maxNotifications) {
+    while (current.isBefore(DateTime.now().add(const Duration(days: 60))) &&
+        count < maxNotifications) {
       if (current.isAfter(DateTime.now())) {
         await scheduleNotification(
           id: notificationId,
@@ -155,13 +158,16 @@ class NotificationService {
         default:
           current = current.add(const Duration(days: 1));
       }
-      
+
       notificationId++;
       count++;
     }
   }
 
-  Future<void> cancelRecurringNotifications(int baseId, {int maxNotifications = 30}) async {
+  Future<void> cancelRecurringNotifications(
+    int baseId, {
+    int maxNotifications = 30,
+  }) async {
     for (int i = 0; i < maxNotifications; i++) {
       await _notificationsPlugin.cancel(id: baseId + i);
     }

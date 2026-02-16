@@ -23,10 +23,7 @@ class VetRepository {
   }
 
   Future<List<Vet>> getVets() async {
-    return await _isar.vets
-        .filter()
-        .isDeletedEqualTo(false)
-        .findAll();
+    return await _isar.vets.filter().isDeletedEqualTo(false).findAll();
   }
 
   Future<void> saveVet(Vet vet) async {
@@ -64,10 +61,17 @@ class VetRepository {
       };
 
       if (vet.supabaseId != null) {
-        await _supabase.from('vets').update(data).eq('id', vet.supabaseId!);
+        final res = await _supabase
+            .from('vets')
+            .update(data)
+            .eq('id', vet.supabaseId!)
+            .select()
+            .single();
+        vet.updatedAt = DateTime.tryParse(res['updated_at'] ?? '');
       } else {
         final res = await _supabase.from('vets').insert(data).select().single();
         vet.supabaseId = res['id'];
+        vet.updatedAt = DateTime.tryParse(res['updated_at'] ?? '');
         await _isar.writeTxn(() async {
           await _isar.vets.put(vet);
         });
@@ -131,6 +135,9 @@ class VetRepository {
           vet.createdAt = data['created_at'] != null
               ? DateTime.tryParse(data['created_at'])
               : DateTime.now();
+          vet.updatedAt = data['updated_at'] != null
+              ? DateTime.tryParse(data['updated_at'])
+              : null;
 
           await _isar.vets.put(vet);
         }

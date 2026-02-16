@@ -106,9 +106,15 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
       if (_selectedImageFile != null) {
         final userId = Supabase.instance.client.auth.currentUser?.id;
         if (userId != null) {
-          finalPhotoUrl = await ref
+          final uploadedUrl = await ref
               .read(storageServiceProvider)
               .uploadPetPhoto(_selectedImageFile!, userId);
+
+          if (uploadedUrl != null) {
+            finalPhotoUrl = uploadedUrl;
+          } else {
+            throw Exception('Failed to upload image. Please try again.');
+          }
         }
       }
 
@@ -128,7 +134,12 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
 
       await ref.read(petManagementProvider).savePet(pet);
 
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -137,6 +148,60 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  void _deletePet() async {
+    if (widget.initialPet == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Delete Profile',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to delete ${_nameController.text}\'s profile? This action can only be undone by an administrator.',
+          style: GoogleFonts.firaSans(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() => _isUploading = true);
+      try {
+        await ref.read(petManagementProvider).softDeletePet(widget.initialPet!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile deleted successfully'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          // Go back to the dashboard (pop twice if coming from details)
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error deleting pet: $e')));
+        }
+      } finally {
+        if (mounted) setState(() => _isUploading = false);
+      }
     }
   }
 
@@ -236,6 +301,39 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
                   const SizedBox(height: 24),
                   _buildLabel('WEIGHT'),
                   _buildWeightInput(theme).animate().fadeIn(delay: 500.ms),
+
+                  if (isEditing &&
+                      widget.initialPet?.ownerId ==
+                          Supabase.instance.client.auth.currentUser?.id) ...[
+                    const SizedBox(height: 48),
+                    Divider(color: Colors.grey.withValues(alpha: 0.1)),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        onPressed: _isUploading ? null : _deletePet,
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
+                        label: Text(
+                          'Delete Pet Profile',
+                          style: GoogleFonts.outfit(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.all(16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Colors.red, width: 1),
+                          ),
+                        ),
+                      ),
+                    ).animate().fadeIn(delay: 600.ms),
+                  ],
+
                   const SizedBox(height: 120),
                 ],
               ),

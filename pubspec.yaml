@@ -30,7 +30,7 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.13.2
   timezone: ^0.10.1
-  flutter_timezone: ^4.0.0
+  flutter_timezone: ^5.0.1
   shared_preferences: ^2.5.4
   path: ^1.9.0
 
@@ -41,9 +41,23 @@ dev_dependencies:
   riverpod_generator: ^2.3.9
   build_runner: ^2.4.7
   isar_generator: ^3.1.0+1
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default:21
+
 
 flutter:
   uses-material-design: true
   assets:
     - .env
     - assets/images/logo_illustration.png
+    - assets/images/app_icon.png
+
+dependency_overrides:
+  sqflite_android: 2.4.1
+
+

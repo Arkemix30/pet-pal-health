@@ -73,10 +73,13 @@ class ScheduleRepository {
       };
 
       if (schedule.supabaseId != null) {
-        await _supabase
+        final res = await _supabase
             .from('health_schedules')
             .update(data)
-            .eq('id', schedule.supabaseId!);
+            .eq('id', schedule.supabaseId!)
+            .select()
+            .single();
+        schedule.updatedAt = DateTime.tryParse(res['updated_at'] ?? '');
       } else {
         final res = await _supabase
             .from('health_schedules')
@@ -84,6 +87,7 @@ class ScheduleRepository {
             .select()
             .single();
         schedule.supabaseId = res['id'];
+        schedule.updatedAt = DateTime.tryParse(res['updated_at'] ?? '');
         await _isar.writeTxn(() async {
           await _isar.healthSchedules.put(schedule);
         });
@@ -179,6 +183,9 @@ class ScheduleRepository {
           schedule.createdAt = data['created_at'] != null
               ? DateTime.tryParse(data['created_at'])
               : DateTime.now();
+          schedule.updatedAt = data['updated_at'] != null
+              ? DateTime.tryParse(data['updated_at'])
+              : null;
 
           await _isar.healthSchedules.put(schedule);
 
