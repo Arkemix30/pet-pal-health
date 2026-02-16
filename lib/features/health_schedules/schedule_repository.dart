@@ -53,7 +53,7 @@ class ScheduleRepository {
     );
 
     // 3. Sync to remote
-    _syncScheduleToRemote(schedule);
+    await _syncScheduleToRemote(schedule);
   }
 
   Future<void> _syncScheduleToRemote(HealthSchedule schedule) async {
@@ -105,7 +105,7 @@ class ScheduleRepository {
     await _notificationService.cancelNotification(schedule.id);
 
     // 3. Sync to remote
-    _syncScheduleToRemote(schedule);
+    await _syncScheduleToRemote(schedule);
   }
 
   Future<void> deleteSchedule(int localId, String? supabaseId) async {
@@ -124,6 +124,76 @@ class ScheduleRepository {
       } catch (e) {
         print('Remote schedule delete failed: $e');
       }
+    }
+  }
+
+  /// Finds all schedules that haven't been synced to Supabase yet and syncs them.
+  Future<void> syncAllUnsynced() async {
+    final unsynced = await _isar.healthSchedules
+        .filter()
+        .supabaseIdIsNull()
+        .findAll();
+    for (final schedule in unsynced) {
+      await _syncScheduleToRemote(schedule);
+    }
+  }
+
+  /// Pulls all schedules from Supabase for current users' pets and merges them locally.
+  Future<void> fetchSchedulesFromRemote() async {
+    try {
+      // 1. Get all local pet supabase IDs to filter the pull
+      final localPets = await _isar.pets.where().findAll();
+      final petIds = localPets
+          .map((p) => p.supabaseId)
+          .whereType<String>()
+          .toList();
+
+      if (petIds.isEmpty) return;
+
+      final List<dynamic> remoteData = await _supabase
+          .from('health_schedules')
+          .select()
+          .inFilter('pet_id', petIds);
+
+      await _isar.writeTxn(() async {
+        for (final data in remoteData) {
+          final String supabaseId = data['id'];
+          final existing = await _isar.healthSchedules
+              .filter()
+              .supabaseIdEqualTo(supabaseId)
+              .findFirst();
+
+          final schedule = existing ?? HealthSchedule();
+          schedule.supabaseId = supabaseId;
+          schedule.petSupabaseId = data['pet_id'];
+          schedule.title = data['title'];
+          schedule.type = data['type'];
+          schedule.startDate = DateTime.parse(data['start_date']);
+          schedule.frequency = data['frequency'];
+          schedule.notes = data['notes'];
+          schedule.isCompleted = data['is_completed'] ?? false;
+          schedule.completedAt = data['completed_at'] != null
+              ? DateTime.tryParse(data['completed_at'])
+              : null;
+          schedule.createdAt = data['created_at'] != null
+              ? DateTime.tryParse(data['created_at'])
+              : DateTime.now();
+
+          await _isar.healthSchedules.put(schedule);
+
+          // Update/Re-schedule notification if not completed
+          if (!schedule.isCompleted) {
+            await _notificationService.scheduleNotification(
+              id: schedule.id,
+              title: "Pet Care Reminder: ${schedule.title}",
+              body: "Time for your pet's ${schedule.type}!",
+              scheduledDate: schedule.startDate,
+            );
+          }
+        }
+      });
+    } catch (e) {
+      print('Failed to pull schedules: $e');
     }
   }
 }

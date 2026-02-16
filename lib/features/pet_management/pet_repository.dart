@@ -119,4 +119,56 @@ class PetRepository {
       await _syncPetToRemote(pet);
     }
   }
+
+  /// Pulls all pets from Supabase and merges them with the local database.
+  Future<void> fetchPetsFromRemote() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final List<dynamic> remoteData = await _supabase
+          .from('pets')
+          .select()
+          .eq('owner_id', userId)
+          .eq('is_deleted', false);
+
+      await _isar.writeTxn(() async {
+        for (final data in remoteData) {
+          final String supabaseId = data['id'];
+          final existingPet = await _isar.pets
+              .filter()
+              .supabaseIdEqualTo(supabaseId)
+              .findFirst();
+
+          final pet = existingPet ?? Pet();
+          pet.supabaseId = supabaseId;
+          pet.ownerId = data['owner_id'];
+          pet.name = data['name'];
+          pet.species = data['species'];
+          pet.breed = data['breed'];
+          pet.birthDate = data['birth_date'] != null
+              ? DateTime.tryParse(data['birth_date'])
+              : null;
+          pet.weightKg = (data['weight_kg'] as num?)?.toDouble();
+          pet.photoUrl = data['photo_url'];
+          pet.isDeleted = data['is_deleted'] ?? false;
+          pet.createdAt = data['created_at'] != null
+              ? DateTime.tryParse(data['created_at'])
+              : DateTime.now();
+
+          await _isar.pets.put(pet);
+        }
+      });
+    } catch (e) {
+      print('Failed to pull pets from remote: $e');
+    }
+  }
+
+  /// Perimeter method to sync everything.
+  Future<void> performFullSync() async {
+    // 1. Pull new data from remote
+    await fetchPetsFromRemote();
+    // 2. Push local changes
+    await syncAllUnsynced();
+  }
 }
