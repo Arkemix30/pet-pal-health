@@ -49,3 +49,6 @@ app.*.map.json
 
 # Generated Isar code
 *.g.dart
+
+
+.stitch_assets
