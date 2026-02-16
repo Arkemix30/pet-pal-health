@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/local/isar_models.dart';
+import '../health_schedules/pet_details_screen.dart';
 import 'pet_provider.dart';
 import 'add_pet_screen.dart';
 
@@ -105,7 +106,9 @@ class _PetCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          // Future: Navigate to Pet Details
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => PetDetailsScreen(pet: pet)));
         },
         borderRadius: BorderRadius.circular(24),
         child: Padding(
@@ -156,7 +159,7 @@ class _PetCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'All records up to date', // Placeholder for health status
+                        'All records up to date',
                         style: TextStyle(
                           color: theme.colorScheme.primary,
                           fontSize: 12,
