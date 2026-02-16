@@ -16,6 +16,22 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
+    if (project.name != "app") {
+        afterEvaluate {
+            if (project.hasProperty("android")) {
+                val android = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
+                if (android.namespace == null) {
+                    android.namespace = when (project.name) {
+                        "isar_flutter_libs" -> "dev.isar.isar_flutter_libs"
+                        else -> "com.petpal.health.${project.name.replace("-", ".")}"
+                    }
+                }
+            }
+        }
+    }
+}
+
+subprojects {
     project.evaluationDependsOn(":app")
 }
 
