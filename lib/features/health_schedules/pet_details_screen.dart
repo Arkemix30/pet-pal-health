@@ -8,6 +8,7 @@ import 'add_schedule_screen.dart';
 import '../sharing/sharing_screen.dart';
 import '../pet_management/pet_form_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../pet_management/pet_history_screen.dart';
 
 class PetDetailsScreen extends ConsumerWidget {
   final Pet pet;
@@ -518,42 +519,79 @@ class PetDetailsScreen extends ConsumerWidget {
       crossAxisSpacing: 12,
       childAspectRatio: 0.8,
       children: [
-        _buildActionItem(context, Icons.vaccines_outlined, 'Log\nVaccine'),
-        _buildActionItem(context, Icons.medical_services_outlined, 'Add\nMeds'),
-        _buildActionItem(context, Icons.calendar_month_outlined, 'Book\nVet'),
-        _buildActionItem(context, Icons.history, 'View\nHistory'),
+        _buildActionItem(
+          context,
+          Icons.vaccines_outlined,
+          'Log\nVaccine',
+          onTap: () => _navigateToAddSchedule(context, type: 'vaccine'),
+        ),
+        _buildActionItem(
+          context,
+          Icons.medical_services_outlined,
+          'Add\nMeds',
+          onTap: () => _navigateToAddSchedule(context, type: 'medication'),
+        ),
+        _buildActionItem(
+          context,
+          Icons.calendar_month_outlined,
+          'Book\nVet',
+          onTap: () => _navigateToAddSchedule(context, type: 'appointment'),
+        ),
+        _buildActionItem(
+          context,
+          Icons.history,
+          'View\nHistory',
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => PetHistoryScreen(pet: pet))),
+        ),
       ],
     );
   }
 
-  Widget _buildActionItem(BuildContext context, IconData icon, String label) {
+  Widget _buildActionItem(
+    BuildContext context,
+    IconData icon,
+    String label, {
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.05),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: theme.dividerColor.withValues(alpha: 0.05),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: const Color(0xFF19E65E), size: 28),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey,
+              height: 1.2,
             ),
           ),
-          child: Icon(icon, color: const Color(0xFF19E65E), size: 28),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.outfit(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey,
-            height: 1.2,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -585,7 +623,7 @@ class PetDetailsScreen extends ConsumerWidget {
     );
   }
 
-  void _navigateToAddSchedule(BuildContext context) {
+  void _navigateToAddSchedule(BuildContext context, {String? type}) {
     if (pet.supabaseId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please wait for sync to complete')),
@@ -594,7 +632,10 @@ class PetDetailsScreen extends ConsumerWidget {
     }
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AddScheduleScreen(petSupabaseId: pet.supabaseId!),
+        builder: (_) => AddScheduleScreen(
+          petSupabaseId: pet.supabaseId!,
+          initialType: type,
+        ),
       ),
     );
   }

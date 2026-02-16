@@ -8,6 +8,7 @@ import '../health_schedules/pet_details_screen.dart';
 import '../health_schedules/schedule_provider.dart';
 import 'pet_provider.dart';
 import 'pet_form_screen.dart';
+import 'pet_history_screen.dart';
 import '../health_schedules/add_schedule_screen.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -34,7 +35,15 @@ class PetDashboardScreen extends ConsumerWidget {
       body: petsAsync.when(
         data: (pets) {
           if (pets.isEmpty) {
-            return _buildEmptyState(context);
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(petManagementProvider).performFullSync();
+                final schedMgr = ref.read(scheduleManagementProvider);
+                await schedMgr.syncAllUnsynced();
+                await schedMgr.fetchSchedulesFromRemote();
+              },
+              child: _buildEmptyState(context),
+            );
           }
 
           // Ensure an active pet is selected
@@ -43,32 +52,48 @@ class PetDashboardScreen extends ConsumerWidget {
             orElse: () => pets.first,
           );
 
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              _buildHeader(context, pets, activePet, ref),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 24),
-                      _buildFeaturedCard(context, activePet),
-                      const SizedBox(height: 32),
-                      _buildSectionTitle('Upcoming Reminders'),
-                      const SizedBox(height: 16),
-                      _buildUpcomingTimeline(context, activePet),
-                      const SizedBox(height: 32),
-                      _buildSectionTitle('Quick Actions'),
-                      const SizedBox(height: 16),
-                      _buildQuickActions(context, activePet),
-                      const SizedBox(height: 100),
-                    ],
+          return RefreshIndicator(
+            onRefresh: () async {
+              // 1. Trigger haptic feedback (optional but good for UX) or just sync
+              // 2. Perform Full Sync
+              await ref.read(petManagementProvider).performFullSync();
+              final schedMgr = ref.read(scheduleManagementProvider);
+              await schedMgr.syncAllUnsynced();
+              await schedMgr.fetchSchedulesFromRemote();
+            },
+            color: theme.colorScheme.primary,
+            backgroundColor: theme.colorScheme.surface,
+            displacement: 20, // Adjusts where the spinner appears
+            child: CustomScrollView(
+              // Ensure scroll view is always scrollable so P2R works even with few items
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                _buildHeader(context, pets, activePet, ref),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+                        _buildFeaturedCard(context, activePet),
+                        const SizedBox(height: 32),
+                        _buildSectionTitle('Upcoming Reminders'),
+                        const SizedBox(height: 16),
+                        _buildUpcomingTimeline(context, activePet),
+                        const SizedBox(height: 32),
+                        _buildSectionTitle('Quick Actions'),
+                        const SizedBox(height: 16),
+                        _buildQuickActions(context, activePet),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -94,22 +119,19 @@ class PetDashboardScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return SliverAppBar(
-      expandedHeight: 220,
+      expandedHeight: 280,
       collapsedHeight: 80,
       pinned: true,
       backgroundColor: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
       elevation: 0,
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {
-          final isCollapsed = constraints.maxHeight < 200;
+          final isCollapsed = constraints.maxHeight < 240;
           return FlexibleSpaceBar(
             background: Container(
-              padding: EdgeInsets.only(
-                top: isCollapsed ? 80 : 60,
-                left: 20,
-                right: 0,
-              ),
+              padding: EdgeInsets.fromLTRB(20, isCollapsed ? 80 : 60, 0, 0),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
@@ -157,24 +179,32 @@ class PetDashboardScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  SizedBox(height: isCollapsed ? 12 : 20),
-                  SizedBox(
-                    height: isCollapsed ? 60 : 110,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: pets.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == pets.length) {
-                          return _buildAddPetButton(context);
-                        }
+                  if (!isCollapsed) ...[
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: 110,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: pets.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == pets.length) {
+                            return _buildAddPetButton(context);
+                          }
 
-                        final pet = pets[index];
-                        final isActive = pet.supabaseId == activePet.supabaseId;
-                        return _buildPetAvatarItem(context, pet, isActive, ref);
-                      },
+                          final pet = pets[index];
+                          final isActive =
+                              pet.supabaseId == activePet.supabaseId;
+                          return _buildPetAvatarItem(
+                            context,
+                            pet,
+                            isActive,
+                            ref,
+                          );
+                        },
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -602,7 +632,9 @@ class PetDashboardScreen extends ConsumerWidget {
           Icons.history,
           'History',
           onTap: () {
-            // Future: Navigate to Timeline
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => PetHistoryScreen(pet: pet)),
+            );
           },
         ),
       ],
@@ -651,7 +683,9 @@ class PetDashboardScreen extends ConsumerWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
         alignment: Alignment.center,
