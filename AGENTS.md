@@ -1,11 +1,11 @@
 # 🤖 AGENTS.md - Operational Guide
 
-This document is the primary source of truth for AI agents and human contributors to understand, operate, and maintain the **PetCare Brain** repository.
+This document is the primary source of truth for AI agents and human contributors to understand, operate, and maintain the **Pet Pal Health** repository.
 
 ---
 
 ## 🎯 Purpose
-PetCare Brain is a mobile-first Flutter application (Local-First) designed to track pet health (vaccines, meds, schedules). It uses **Isar** for local storage and **Supabase** for real-time cloud synchronization.
+Pet Pal Health is a mobile-first Flutter application (Local-First) designed to track pet health (vaccines, meds, schedules). It uses **Isar** for local storage and **Supabase** for real-time cloud synchronization.
 
 ---
 

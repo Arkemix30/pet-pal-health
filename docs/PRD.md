@@ -1,12 +1,12 @@
 # Product Requirements Document (PRD)
 
-# PetCare Brain
+# Pet Pal Health
 
 ## 1. Overview
 
-PetCare Brain is a mobile-first application designed to help pet owners track, manage, and stay on top of their pets’ health needs. The product acts as a centralized health memory and reminder system, reducing missed vaccines, medications, deworming schedules, and vet appointments.
+Pet Pal Health is a mobile-first application designed to help pet owners track, manage, and stay on top of their pets’ health needs. The product acts as a centralized health memory and reminder system, reducing missed vaccines, medications, deworming schedules, and vet appointments.
 
-Unlike generic calendar reminders or scattered notes, PetCare Brain consolidates all pet health data into a single source of truth and proactively reminds users until actions are confirmed.
+Unlike generic calendar reminders or scattered notes, Pet Pal Health consolidates all pet health data into a single source of truth and proactively reminds users until actions are confirmed.
 
 ### Value Proposition
 
@@ -282,7 +282,7 @@ Primary early focus: user growth and engagement over revenue.
 
 ## 12. Future Vision
 
-PetCare Brain will evolve into a trusted pet health companion that:
+Pet Pal Health will evolve into a trusted pet health companion that:
 
 - Provides intelligent, contextual insights
 - Reduces cognitive load for owners
