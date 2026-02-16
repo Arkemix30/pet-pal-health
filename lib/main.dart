@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'features/auth/auth_provider.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/auth/auth_service.dart';
+import 'features/pet_management/pet_dashboard_screen.dart';
 
 final logger = Logger();
 
@@ -51,7 +52,7 @@ class PetCareApp extends ConsumerWidget {
     final user = ref.watch(userProvider);
 
     return MaterialApp(
-      title: 'PetCare Brain',
+      title: 'Pet Pal Health',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -84,7 +85,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PetCare Brain'),
+        title: Text(
+          'PetCare Brain',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
         actions: [
           Consumer(
             builder: (context, ref, _) {
@@ -96,7 +100,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(child: Text('Welcome to PetCare Brain!')),
+      body: const PetDashboardScreen(),
     );
   }
 }
