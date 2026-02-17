@@ -122,24 +122,35 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
-        height: 90,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(alpha: 0.95),
+          color: theme.colorScheme.surface.withValues(alpha: 0.9),
           border: Border(
             top: BorderSide(
-              color: theme.dividerColor.withValues(alpha: 0.05),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
               width: 1,
             ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.home_filled, 'Home'),
-            _buildNavItem(1, Icons.history, 'Timeline'),
-            _buildNavItem(2, Icons.local_hospital, 'Vets'),
-            _buildNavItem(3, Icons.person, 'Profile'),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
           ],
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            height: 70,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(0, Icons.home_filled, 'Home'),
+                _buildNavItem(1, Icons.history, 'Timeline'),
+                _buildNavItem(2, Icons.local_hospital, 'Vets'),
+                _buildNavItem(3, Icons.person, 'Profile'),
+              ],
+            ),
+          ),
         ),
       ),
     );
