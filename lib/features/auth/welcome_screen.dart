@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'auth_provider.dart';
 import 'auth_screen.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/confirm_dialog.dart';
 
 class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
@@ -293,9 +295,15 @@ class WelcomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _handleContinue(BuildContext context, WidgetRef ref, bool isLogin) async {
-    final hasAccepted = await ref.read(onboardingStateProvider.notifier).hasAcceptedDisclaimer();
-    
+  Future<void> _handleContinue(
+    BuildContext context,
+    WidgetRef ref,
+    bool isLogin,
+  ) async {
+    final hasAccepted = await ref
+        .read(onboardingStateProvider.notifier)
+        .hasAcceptedDisclaimer();
+
     if (!hasAccepted && context.mounted) {
       final accepted = await _showDisclaimerDialog(context);
       if (!accepted) return;
@@ -303,7 +311,7 @@ class WelcomeScreen extends ConsumerWidget {
     }
 
     await ref.read(onboardingStateProvider.notifier).completeOnboarding();
-    
+
     if (context.mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -314,42 +322,21 @@ class WelcomeScreen extends ConsumerWidget {
   }
 
   Future<bool> _showDisclaimerDialog(BuildContext context) async {
-    return await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(width: 8),
-            const Text('Medical Disclaimer'),
-          ],
-        ),
-        content: const SingleChildScrollView(
-          child: Text(
-            'Pet Pal Health is intended for informational purposes only.\n\n'
-            'This app does not replace professional veterinary care. '
-            'Always consult with a qualified veterinarian for medical advice, '
-            'diagnosis, or treatment.\n\n'
-            'The developers of this app are not responsible for any health '
-            'issues that may arise from relying solely on the information '
-            'provided by this application.',
+    return await OverlayManager.showPremiumModal<bool>(
+          context,
+          child: PremiumConfirmDialog(
+            title: 'Medical Disclaimer',
+            message:
+                'Pet Pal Health is intended for informational purposes only.\n\n'
+                'This app does not replace professional veterinary care. '
+                'Always consult with a qualified veterinarian for medical advice, '
+                'diagnosis, or treatment.',
+            confirmLabel: 'I Understand',
+            cancelLabel: 'Decline',
+            onConfirm: () => Navigator.pop(context, true),
+            onCancel: () => Navigator.pop(context, false),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Decline'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('I Understand'),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 }

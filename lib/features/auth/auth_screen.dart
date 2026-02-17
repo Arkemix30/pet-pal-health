@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
 import 'auth_service.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -59,22 +60,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       }
     } on AuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
+        OverlayManager.showToast(
+          context,
+          message: e.message,
+          type: ToastType.error,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('An unexpected error occurred. Please try again.'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
+        OverlayManager.showToast(
+          context,
+          message: 'An unexpected error occurred. Please try again.',
+          type: ToastType.error,
         );
       }
     } finally {
