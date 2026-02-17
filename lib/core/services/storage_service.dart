@@ -26,7 +26,7 @@ class StorageService {
           .upload(
             filePath,
             file,
-            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
           );
 
       final String publicUrl = _supabase.storage
@@ -35,7 +35,7 @@ class StorageService {
       return publicUrl;
     } catch (e) {
       print('Error uploading pet photo: $e');
-      return null;
+      rethrow;
     }
   }
 
