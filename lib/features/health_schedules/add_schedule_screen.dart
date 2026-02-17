@@ -3,15 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/local/isar_models.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/success_modal.dart';
 import 'schedule_provider.dart';
 
 class AddScheduleScreen extends ConsumerStatefulWidget {
   final String petSupabaseId;
   final String? initialType;
+  final Pet? pet;
   const AddScheduleScreen({
     super.key,
     required this.petSupabaseId,
     this.initialType,
+    this.pet,
   });
 
   @override
@@ -88,7 +92,20 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
       ..createdAt = DateTime.now();
 
     await ref.read(scheduleManagementProvider).saveSchedule(schedule);
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) {
+      OverlayManager.showPremiumModal(
+        context,
+        child: PremiumSuccessModal(
+          title: 'Reminder Created!',
+          message: 'We\'ll notify you when it\'s time for',
+          petName: widget.pet?.name ?? 'your pet',
+          onPrimaryPressed: () {
+            Navigator.of(context).pop(); // Close modal
+            Navigator.of(context).pop(); // Go back
+          },
+        ),
+      );
+    }
   }
 
   @override
@@ -96,7 +113,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Schedule Action', style: GoogleFonts.outfit()),
         centerTitle: true,
@@ -130,7 +147,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : const Color(0xFFF8F9FA),
+                                : theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: isSelected
                                 ? [
@@ -251,10 +268,12 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
       prefixIcon: Icon(icon),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
       ),
       filled: true,
-      fillColor: const Color(0xFFF8F9FA),
+      fillColor: Theme.of(context).colorScheme.surface,
     );
   }
 }
