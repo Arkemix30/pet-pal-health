@@ -109,15 +109,9 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
       if (_selectedImageFile != null) {
         final userId = Supabase.instance.client.auth.currentUser?.id;
         if (userId != null) {
-          final uploadedUrl = await ref
+          finalPhotoUrl = await ref
               .read(storageServiceProvider)
               .uploadPetPhoto(_selectedImageFile!, userId);
-
-          if (uploadedUrl != null) {
-            finalPhotoUrl = uploadedUrl;
-          } else {
-            throw Exception('Failed to upload image. Please try again.');
-          }
         }
       }
 
@@ -346,7 +340,6 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -358,18 +351,26 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
                   ],
                 ),
               ),
-              child: ElevatedButton(
-                onPressed: _isUploading ? null : _save,
-                child: _isUploading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(isEditing ? 'Update Profile' : 'Create Profile'),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, size: 20),
-                        ],
-                      ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: ElevatedButton(
+                    onPressed: _isUploading ? null : _save,
+                    child: _isUploading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                isEditing ? 'Update Profile' : 'Create Profile',
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward, size: 20),
+                            ],
+                          ),
+                  ),
+                ),
               ),
             ),
           ),
