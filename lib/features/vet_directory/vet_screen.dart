@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/local/isar_models.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/confirm_dialog.dart';
 import 'vet_provider.dart';
 import 'vet_form_screen.dart';
 
@@ -15,7 +17,7 @@ class VetScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Vet Directory',
@@ -50,7 +52,7 @@ class VetScreen extends ConsumerWidget {
             },
             child: ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
               itemCount: vets.length,
               itemBuilder: (context, index) {
                 final vet = vets[index];
@@ -109,31 +111,29 @@ class VetScreen extends ConsumerWidget {
     ).push(MaterialPageRoute(builder: (context) => VetFormScreen(vet: vet)));
   }
 
-  void _deleteVet(BuildContext context, WidgetRef ref, Vet vet) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Vet'),
-        content: Text('Are you sure you want to delete ${vet.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(vetManagementProvider).deleteVet(vet.id, vet.supabaseId);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
+  void _deleteVet(BuildContext context, WidgetRef ref, Vet vet) async {
+    final confirmed = await OverlayManager.showPremiumModal<bool>(
+      context,
+      child: PremiumConfirmDialog(
+        title: 'Delete Vet',
+        message: 'Are you sure you want to delete ${vet.name}?',
+        confirmLabel: 'Delete',
+        isDestructive: true,
+        onConfirm: () => Navigator.of(context).pop(true),
+        onCancel: () => Navigator.of(context).pop(false),
       ),
     );
+
+    if (confirmed == true) {
+      await ref.read(vetManagementProvider).deleteVet(vet.id, vet.supabaseId);
+      if (context.mounted) {
+        OverlayManager.showToast(
+          context,
+          message: 'Vet profile removed',
+          type: ToastType.success,
+        );
+      }
+    }
   }
 }
 
@@ -150,17 +150,15 @@ class _VetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-          ),
-        ],
+        border: Border.all(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -174,12 +172,12 @@ class _VetCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2D6A4F).withValues(alpha: 0.1),
+                    color: theme.colorScheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.local_hospital,
-                    color: Color(0xFF2D6A4F),
+                    color: theme.colorScheme.primary,
                     size: 24,
                   ),
                 ),

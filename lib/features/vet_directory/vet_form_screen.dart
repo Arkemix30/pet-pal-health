@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/local/isar_models.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/success_modal.dart';
 import 'vet_provider.dart';
 
 class VetFormScreen extends ConsumerStatefulWidget {
@@ -46,7 +48,7 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           isEditing ? 'Edit Vet' : 'Add Vet',
@@ -157,7 +159,9 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
           style: GoogleFonts.outfit(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.grey[700],
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 8),
@@ -169,18 +173,25 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderSide: BorderSide(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF2D6A4F), width: 2),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -214,17 +225,27 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
       await ref.read(vetManagementProvider).saveVet(vet);
 
       if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? 'Vet updated!' : 'Vet added!'),
+        OverlayManager.showPremiumModal(
+          context,
+          child: PremiumSuccessModal(
+            title: isEditing ? 'Vet Updated!' : 'Vet Added!',
+            message: isEditing
+                ? 'Information saved for'
+                : 'Successfully registered',
+            petName: _nameController.text.trim(),
+            onPrimaryPressed: () {
+              Navigator.of(context).pop(); // Close modal
+              Navigator.of(context).pop(); // Go back
+            },
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+        OverlayManager.showToast(
+          context,
+          message: 'Error: $e',
+          type: ToastType.error,
         );
       }
     } finally {
