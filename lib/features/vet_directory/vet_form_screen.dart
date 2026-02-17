@@ -21,6 +21,9 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
   late final TextEditingController _notesController;
+  late final TextEditingController _specialtyController;
+  late final TextEditingController _ratingController;
+  late bool _isFavorite;
   bool _isLoading = false;
 
   bool get isEditing => widget.vet != null;
@@ -32,6 +35,13 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
     _phoneController = TextEditingController(text: widget.vet?.phone ?? '');
     _addressController = TextEditingController(text: widget.vet?.address ?? '');
     _notesController = TextEditingController(text: widget.vet?.notes ?? '');
+    _specialtyController = TextEditingController(
+      text: widget.vet?.specialty ?? '',
+    );
+    _ratingController = TextEditingController(
+      text: widget.vet?.rating?.toString() ?? '',
+    );
+    _isFavorite = widget.vet?.isFavorite ?? false;
   }
 
   @override
@@ -40,6 +50,8 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _notesController.dispose();
+    _specialtyController.dispose();
+    _ratingController.dispose();
     super.dispose();
   }
 
@@ -72,6 +84,56 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _specialtyController,
+              label: 'Specialty',
+              hint: 'e.g. Surgeon, General, Emergency',
+              icon: Icons.star_border,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildTextField(
+                    controller: _ratingController,
+                    label: 'Rating (0-5)',
+                    hint: '4.5',
+                    icon: Icons.star_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Favorite',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        value: _isFavorite,
+                        onChanged: (val) => setState(() => _isFavorite = val),
+                        title: const Text('Add to favorites'),
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        activeColor: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             _buildTextField(
@@ -112,7 +174,7 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
                 onPressed: _isLoading ? null : _saveVet,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF112116),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -124,7 +186,7 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          valueColor: AlwaysStoppedAnimation(Color(0xFF112116)),
                         ),
                       )
                     : Text(
@@ -221,6 +283,11 @@ class _VetFormScreenState extends ConsumerState<VetFormScreen> {
       vet.notes = _notesController.text.trim().isNotEmpty
           ? _notesController.text.trim()
           : null;
+      vet.specialty = _specialtyController.text.trim().isNotEmpty
+          ? _specialtyController.text.trim()
+          : null;
+      vet.rating = double.tryParse(_ratingController.text.trim());
+      vet.isFavorite = _isFavorite;
 
       await ref.read(vetManagementProvider).saveVet(vet);
 

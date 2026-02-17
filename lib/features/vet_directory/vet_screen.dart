@@ -8,11 +8,19 @@ import '../../core/ui/overlays/confirm_dialog.dart';
 import 'vet_provider.dart';
 import 'vet_form_screen.dart';
 
-class VetScreen extends ConsumerWidget {
+class VetScreen extends ConsumerStatefulWidget {
   const VetScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VetScreen> createState() => _VetScreenState();
+}
+
+class _VetScreenState extends ConsumerState<VetScreen> {
+  String _searchQuery = '';
+  String _selectedFilter = 'All';
+
+  @override
+  Widget build(BuildContext context) {
     final vetsAsync = ref.watch(vetsStreamProvider);
     final theme = Theme.of(context);
 
@@ -27,41 +35,103 @@ class VetScreen extends ConsumerWidget {
       ),
       body: vetsAsync.when(
         data: (vets) {
-          if (vets.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                await ref.read(vetManagementProvider).syncVetsFromRemote();
-              },
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: SizedBox(
-                      height: constraints.maxHeight,
-                      child: _buildEmptyState(),
-                    ),
-                  );
-                },
-              ),
+          final filteredVets = vets.where((v) {
+            final matchesSearch = v.name.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
             );
-          }
+            final matchesFilter =
+                _selectedFilter == 'All' ||
+                (_selectedFilter == 'Emergency' &&
+                    v.notes?.contains('Emergency') == true) ||
+                (_selectedFilter == 'Specialty' && v.specialty != null);
+            return matchesSearch && matchesFilter;
+          }).toList();
+
+          final favoriteVets = vets.where((v) => v.isFavorite).toList();
 
           return RefreshIndicator(
             onRefresh: () async {
               await ref.read(vetManagementProvider).syncVetsFromRemote();
             },
-            child: ListView.builder(
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
-              itemCount: vets.length,
-              itemBuilder: (context, index) {
-                final vet = vets[index];
-                return _VetCard(
-                  vet: vet,
-                  onTap: () => _editVet(context, vet),
-                  onDelete: () => _deleteVet(context, ref, vet),
-                ).animate().fadeIn(delay: Duration(milliseconds: index * 100));
-              },
+              slivers: [
+                // Favorites Section
+                if (favoriteVets.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                      child: Text(
+                        'Favorites',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 140,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: favoriteVets.length,
+                        itemBuilder: (context, index) {
+                          return _FavoriteVetCard(vet: favoriteVets[index]);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+
+                // Search & Filters
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    child: _VetSearchBar(
+                      onChanged: (value) =>
+                          setState(() => _searchQuery = value),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: _VetFilterChips(
+                      selectedFilter: _selectedFilter,
+                      onFilterSelected: (filter) =>
+                          setState(() => _selectedFilter = filter),
+                    ),
+                  ),
+                ),
+
+                // Main List
+                if (filteredVets.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _buildEmptyState(),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final vet = filteredVets[index];
+                        return _PremiumVetCard(
+                              vet: vet,
+                              onTap: () => _editVet(context, vet),
+                              onDelete: () => _deleteVet(context, ref, vet),
+                              onToggleFavorite: () => _toggleFavorite(vet),
+                            )
+                            .animate()
+                            .fadeIn(delay: Duration(milliseconds: index * 50))
+                            .slideY(begin: 0.1, end: 0);
+                      }, childCount: filteredVets.length),
+                    ),
+                  ),
+              ],
             ),
           );
         },
@@ -71,9 +141,12 @@ class VetScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addVet(context),
         backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Add Vet'),
+        foregroundColor: const Color(0xFF112116),
+        icon: const Icon(Icons.add_rounded),
+        label: Text(
+          'Add Vet',
+          style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
@@ -83,15 +156,17 @@ class VetScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.local_hospital, size: 80, color: Colors.grey[300]),
+          Icon(Icons.local_hospital_rounded, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'No vets added yet',
+            'No vets found',
             style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'Add your veterinarian\'s contact info',
+            _searchQuery.isNotEmpty
+                ? 'Try a different search'
+                : 'Add your first veterinarian',
             style: TextStyle(color: Colors.grey[500]),
           ),
         ],
@@ -109,6 +184,11 @@ class VetScreen extends ConsumerWidget {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => VetFormScreen(vet: vet)));
+  }
+
+  void _toggleFavorite(Vet vet) {
+    vet.isFavorite = !vet.isFavorite;
+    ref.read(vetManagementProvider).saveVet(vet);
   }
 
   void _deleteVet(BuildContext context, WidgetRef ref, Vet vet) async {
@@ -137,116 +217,370 @@ class VetScreen extends ConsumerWidget {
   }
 }
 
-class _VetCard extends StatelessWidget {
+class _VetSearchBar extends StatelessWidget {
+  final ValueChanged<String> onChanged;
+
+  const _VetSearchBar({required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: 'Search for vets, clinics...',
+          prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+      ),
+    );
+  }
+}
+
+class _VetFilterChips extends StatelessWidget {
+  final String selectedFilter;
+  final Function(String) onFilterSelected;
+
+  const _VetFilterChips({
+    required this.selectedFilter,
+    required this.onFilterSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final filters = ['All', 'Open Now', 'Emergency', 'Specialty'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: filters.map((filter) {
+          final isSelected = selectedFilter == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: ChoiceChip(
+              label: Text(filter),
+              selected: isSelected,
+              onSelected: (_) => onFilterSelected(filter),
+              backgroundColor: Colors.white,
+              selectedColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.2),
+              labelStyle: GoogleFonts.manrope(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey[600],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              side: BorderSide(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey[200]!,
+              ),
+              showCheckmark: false,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _FavoriteVetCard extends StatelessWidget {
+  final Vet vet;
+
+  const _FavoriteVetCard({required this.vet});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 110,
+      margin: const EdgeInsets.only(right: 12, left: 8, bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.local_hospital_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  vet.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Icon(
+              Icons.favorite_rounded,
+              color: Colors.red[400],
+              size: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumVetCard extends StatelessWidget {
   final Vet vet;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final VoidCallback onToggleFavorite;
 
-  const _VetCard({
+  const _PremiumVetCard({
     required this.vet,
     required this.onTap,
     required this.onDelete,
+    required this.onToggleFavorite,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.local_hospital,
-                    color: theme.colorScheme.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        vet.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      // Clinic Icon/Image
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.local_hospital_rounded,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
-                      if (vet.phone != null && vet.phone!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Row(
+                      const SizedBox(width: 16),
+                      // Details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.phone,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
                             Text(
-                              vet.phone!,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 13,
+                              vet.name,
+                              style: GoogleFonts.outfit(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                      if (vet.address != null && vet.address!.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                vet.address!,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  color: Colors.amber[600],
+                                  size: 18,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${vet.rating ?? 4.8}',
+                                  style: GoogleFonts.manrope(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Text(
+                                  ' (${vet.ratingCount ?? 42})',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '•',
+                                  style: TextStyle(color: Colors.grey[300]),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${vet.distance ?? 1.2} miles away',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
+                      // Favorite Toggle
+                      IconButton(
+                        onPressed: onToggleFavorite,
+                        icon: Icon(
+                          vet.isFavorite
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_outline_rounded,
+                          color: vet.isFavorite
+                              ? Colors.red[400]
+                              : Colors.grey[300],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.delete_outline, color: Colors.red[400]),
-                  onPressed: onDelete,
+              ),
+            ),
+            // Divider
+            Divider(height: 1, color: Colors.grey[100]),
+            // Actions
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.call_rounded,
+                    label: 'Call',
+                    onTap: () {
+                      OverlayManager.showToast(
+                        context,
+                        message: 'Calling ${vet.name}...',
+                      );
+                    },
+                  ),
                 ),
+                Container(height: 30, width: 1, color: Colors.grey[200]),
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.directions_rounded,
+                    label: 'Directions',
+                    onTap: () {
+                      OverlayManager.showToast(
+                        context,
+                        message: 'Opening maps...',
+                      );
+                    },
+                  ),
+                ),
+                IconButton(
+                  onPressed: onDelete,
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.red[300],
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 8),
               ],
             ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: Colors.grey[600]),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
         ),
       ),
     );

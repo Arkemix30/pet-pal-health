@@ -89,6 +89,15 @@ class Vet {
   String? phone;
   String? address;
   String? notes;
+
+  // New UI-related fields
+  double? rating;
+  int? ratingCount;
+  double? distance;
+  bool isFavorite = false;
+  String? specialty;
+  String? imageUrl;
+
   bool isDeleted = false;
   DateTime? createdAt;
   DateTime? updatedAt;
