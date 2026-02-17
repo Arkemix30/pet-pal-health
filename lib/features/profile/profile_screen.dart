@@ -5,6 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/local/isar_models.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/confirm_dialog.dart';
+import '../../core/ui/overlays/success_modal.dart';
 import '../auth/auth_provider.dart';
 import 'profile_provider.dart';
 import 'widgets/profile_header.dart';
@@ -28,99 +31,108 @@ class ProfileScreen extends ConsumerWidget {
           settingsAsync.whenData((settings) {
             // Settings loaded
           });
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 60),
-                      _buildHeaderTitle(context),
-                      const SizedBox(height: 32),
-                      ProfileHeaderWidget(
-                        profile: profile,
-                        email: user?.email ?? '',
-                        onEditTap: () =>
-                            _showEditProfileSheet(context, ref, profile),
-                        onAvatarTap: () => _showAvatarPicker(context, ref),
-                      ),
-                      const SizedBox(height: 32),
-                      _buildSectionTitle(context, 'Account'),
-                      const SizedBox(height: 12),
-                      SettingsSection(
-                        children: [
-                          SettingsTile(
-                            icon: Icons.person_outline,
-                            title: 'Edit Profile',
-                            subtitle: profile?.fullName ?? 'Add your name',
-                            onTap: () =>
-                                _showEditProfileSheet(context, ref, profile),
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(profileProvider.notifier).syncFromRemote();
+              await ref.read(userSettingsProvider.notifier).syncFromRemote();
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 60),
+                        _buildHeaderTitle(context),
+                        const SizedBox(height: 32),
+                        ProfileHeaderWidget(
+                          profile: profile,
+                          email: user?.email ?? '',
+                          onEditTap: () =>
+                              _showEditProfileSheet(context, ref, profile),
+                          onAvatarTap: () => _showAvatarPicker(context, ref),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildSectionTitle(context, 'Account'),
+                        const SizedBox(height: 12),
+                        SettingsSection(
+                          children: [
+                            SettingsTile(
+                              icon: Icons.person_outline,
+                              title: 'Edit Profile',
+                              subtitle: profile?.fullName ?? 'Add your name',
+                              onTap: () =>
+                                  _showEditProfileSheet(context, ref, profile),
+                            ),
+                            SettingsTile(
+                              icon: Icons.email_outlined,
+                              title: 'Email',
+                              subtitle: user?.email ?? 'No email',
+                              enabled: false,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle(context, 'Notifications'),
+                        const SizedBox(height: 12),
+                        settingsAsync.when(
+                          data: (settings) => _buildNotificationSettings(
+                            context,
+                            ref,
+                            settings,
                           ),
-                          SettingsTile(
-                            icon: Icons.email_outlined,
-                            title: 'Email',
-                            subtitle: user?.email ?? 'No email',
-                            enabled: false,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(context, 'Notifications'),
-                      const SizedBox(height: 12),
-                      settingsAsync.when(
-                        data: (settings) =>
-                            _buildNotificationSettings(context, ref, settings),
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (e, _) => Text('Error: $e'),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(context, 'About'),
-                      const SizedBox(height: 12),
-                      SettingsSection(
-                        children: [
-                          SettingsTile(
-                            icon: Icons.info_outline,
-                            title: 'App Version',
-                            subtitle: '1.0.0',
-                            enabled: false,
-                          ),
-                          SettingsTile(
-                            icon: Icons.privacy_tip_outlined,
-                            title: 'Privacy Policy',
-                            onTap: () =>
-                                _openUrl('https://petpalhealth.com/privacy'),
-                          ),
-                          SettingsTile(
-                            icon: Icons.description_outlined,
-                            title: 'Terms of Service',
-                            onTap: () =>
-                                _openUrl('https://petpalhealth.com/terms'),
-                          ),
-                          SettingsTile(
-                            icon: Icons.star_outline,
-                            title: 'Rate App',
-                            onTap: () {},
-                          ),
-                          SettingsTile(
-                            icon: Icons.chat_bubble_outline,
-                            title: 'Contact Support',
-                            onTap: () =>
-                                _openUrl('mailto:support@petpalhealth.com'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _buildLogoutButton(context, ref),
-                      const SizedBox(height: 100),
-                    ],
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (e, _) => Text('Error: $e'),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle(context, 'About'),
+                        const SizedBox(height: 12),
+                        SettingsSection(
+                          children: [
+                            SettingsTile(
+                              icon: Icons.info_outline,
+                              title: 'App Version',
+                              subtitle: '1.0.0',
+                              enabled: false,
+                            ),
+                            SettingsTile(
+                              icon: Icons.privacy_tip_outlined,
+                              title: 'Privacy Policy',
+                              onTap: () =>
+                                  _openUrl('https://petpalhealth.com/privacy'),
+                            ),
+                            SettingsTile(
+                              icon: Icons.description_outlined,
+                              title: 'Terms of Service',
+                              onTap: () =>
+                                  _openUrl('https://petpalhealth.com/terms'),
+                            ),
+                            SettingsTile(
+                              icon: Icons.star_outline,
+                              title: 'Rate App',
+                              onTap: () {},
+                            ),
+                            SettingsTile(
+                              icon: Icons.chat_bubble_outline,
+                              title: 'Contact Support',
+                              onTap: () =>
+                                  _openUrl('mailto:support@petpalhealth.com'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        _buildLogoutButton(context, ref),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -310,7 +322,18 @@ class ProfileScreen extends ConsumerWidget {
                   await ref
                       .read(profileProvider.notifier)
                       .updateProfile(fullName: nameController.text.trim());
-                  if (context.mounted) Navigator.pop(context);
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close sheet
+                    OverlayManager.showPremiumModal(
+                      context,
+                      child: PremiumSuccessModal(
+                        title: 'Profile Updated!',
+                        message: 'Successfully updated your info to',
+                        petName: nameController.text.trim(),
+                        onPrimaryPressed: () => Navigator.pop(context),
+                      ),
+                    );
+                  }
                 },
                 child: const Text('Save Changes'),
               ),
@@ -341,6 +364,13 @@ class ProfileScreen extends ConsumerWidget {
                   await ref
                       .read(profileProvider.notifier)
                       .uploadAvatar(image.path);
+                  if (context.mounted) {
+                    OverlayManager.showToast(
+                      context,
+                      message: 'Profile picture updated!',
+                      type: ToastType.success,
+                    );
+                  }
                 }
               },
             ),
@@ -357,6 +387,13 @@ class ProfileScreen extends ConsumerWidget {
                   await ref
                       .read(profileProvider.notifier)
                       .uploadAvatar(image.path);
+                  if (context.mounted) {
+                    OverlayManager.showToast(
+                      context,
+                      message: 'Profile picture updated!',
+                      type: ToastType.success,
+                    );
+                  }
                 }
               },
             ),
@@ -366,46 +403,22 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showLogoutConfirmation(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          'Log Out',
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Are you sure you want to log out?',
-          style: GoogleFonts.manrope(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.manrope(color: theme.colorScheme.onSurface),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref.read(logoutProvider)();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(
-              'Log Out',
-              style: GoogleFonts.manrope(color: Colors.white),
-            ),
-          ),
-        ],
+  void _showLogoutConfirmation(BuildContext context, WidgetRef ref) async {
+    final confirmed = await OverlayManager.showPremiumModal<bool>(
+      context,
+      child: PremiumConfirmDialog(
+        title: 'Log Out',
+        message: 'Are you sure you want to log out of Pet Pal Health?',
+        confirmLabel: 'Log Out',
+        isDestructive: true,
+        onConfirm: () => Navigator.pop(context, true),
+        onCancel: () => Navigator.pop(context, false),
       ),
     );
+
+    if (confirmed == true) {
+      await ref.read(logoutProvider)();
+    }
   }
 
   void _openUrl(String url) {

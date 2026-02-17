@@ -16,8 +16,9 @@ class TimelineScreen extends ConsumerWidget {
     final schedulesAsync = ref.watch(allSchedulesProvider);
     // final petsAsync = ref.watch(petsStreamProvider);
 
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Health Timeline',
@@ -73,7 +74,7 @@ class TimelineScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(24),
               children: [
                 if (upcoming.isNotEmpty) ...[
-                  _buildHeader('Upcoming Essentials'),
+                  _buildHeader(context, 'Upcoming Essentials'),
                   const SizedBox(height: 16),
                   ...upcoming.map(
                     (s) => _TimelineTile(schedule: s, isUpcoming: true),
@@ -81,11 +82,12 @@ class TimelineScreen extends ConsumerWidget {
                   const SizedBox(height: 32),
                 ],
                 if (history.isNotEmpty) ...[
-                  _buildHeader('Health History'),
+                  _buildHeader(context, 'Health History'),
                   const SizedBox(height: 16),
                   ...history.map(
                     (s) => _TimelineTile(schedule: s, isUpcoming: false),
                   ),
+                  const SizedBox(height: 80),
                 ],
               ],
             ),
@@ -97,13 +99,14 @@ class TimelineScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(String title) {
+  Widget _buildHeader(BuildContext context, String title) {
+    final theme = Theme.of(context);
     return Text(
       title,
       style: GoogleFonts.outfit(
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        color: const Color(0xFF2D6A4F),
+        color: theme.colorScheme.primary,
       ),
     );
   }
@@ -185,31 +188,29 @@ class _TimelineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-          ),
-        ],
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (isUpcoming ? const Color(0xFF2D6A4F) : Colors.grey)
+              color: (isUpcoming ? theme.colorScheme.primary : Colors.grey)
                   .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isUpcoming ? _getIcon(schedule.type) : Icons.check_circle,
-              color: isUpcoming ? const Color(0xFF2D6A4F) : Colors.grey,
+              color: isUpcoming ? theme.colorScheme.primary : Colors.grey,
               size: 24,
             ),
           ),
@@ -229,7 +230,10 @@ class _TimelineTile extends StatelessWidget {
                   isUpcoming
                       ? 'Due: ${schedule.startDate.toString().split(' ')[0]}'
                       : 'Completed: ${schedule.completedAt?.toString().split(' ')[0] ?? "N/A"}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),

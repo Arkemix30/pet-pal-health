@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/local/isar_models.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/confirm_dialog.dart';
 import 'sharing_repository.dart';
 
 class SharingScreen extends ConsumerStatefulWidget {
@@ -20,8 +22,10 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
   void _inviteUser() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid email')),
+      OverlayManager.showToast(
+        context,
+        message: 'Please enter a valid email',
+        type: ToastType.error,
       );
       return;
     }
@@ -32,16 +36,20 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
           .read(sharingRepositoryProvider)
           .inviteUser(petSupabaseId: widget.pet.supabaseId!, email: email);
       if (mounted) {
-        ScaffoldMessenger.of(
+        OverlayManager.showToast(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Invitation sent!')));
+          message: 'Invitation sent to $email',
+          type: ToastType.success,
+        );
         _emailController.clear();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        OverlayManager.showToast(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+          message: 'Error: $e',
+          type: ToastType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -55,7 +63,7 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Share ${widget.pet.name}', style: GoogleFonts.outfit()),
         centerTitle: true,
@@ -68,7 +76,7 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                color: theme.colorScheme.primary.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -112,10 +120,20 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
                     decoration: InputDecoration(
                       hintText: 'email@example.com',
                       filled: true,
-                      fillColor: const Color(0xFFF8F9FA),
+                      fillColor: Theme.of(context).colorScheme.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.onSurface.withOpacity(0.1),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.1,
+                          ),
+                        ),
                       ),
                       prefixIcon: const Icon(Icons.email_outlined),
                     ),
@@ -172,7 +190,8 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: sharedUsers.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final user = sharedUsers[index];
                     return _buildSharedUserTile(user);
@@ -187,22 +206,26 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
   }
 
   Widget _buildSharedUserTile(PetShare share) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+        ),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: const Color(0xFF2D6A4F).withValues(alpha: 0.1),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
             child: Text(
               (share.sharedWithEmail?.isNotEmpty == true)
                   ? share.sharedWithEmail![0].toUpperCase()
                   : '?',
-              style: const TextStyle(
-                color: Color(0xFF2D6A4F),
+              style: TextStyle(
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -214,25 +237,20 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
               children: [
                 Text(
                   share.sharedWithEmail ?? 'Unknown',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 Text(
                   share.accessLevel == 'editor' ? 'Can edit' : 'View only',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(
-              Icons.remove_circle_outline,
-              color: Colors.red,
-            ),
+            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
             onPressed: () => _confirmRevoke(share),
             tooltip: 'Revoke access',
           ),
@@ -241,60 +259,56 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
     );
   }
 
-  void _confirmRevoke(PetShare share) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Revoke Access'),
-        content: Text(
-          'Are you sure you want to remove ${share.sharedWithEmail} from accessing ${widget.pet.name}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _revokeAccess(share);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Revoke'),
-          ),
-        ],
+  void _confirmRevoke(PetShare share) async {
+    final confirmed = await OverlayManager.showPremiumModal<bool>(
+      context,
+      child: PremiumConfirmDialog(
+        title: 'Revoke Access',
+        message:
+            'Are you sure you want to remove ${share.sharedWithEmail} from accessing ${widget.pet.name}?',
+        confirmLabel: 'Revoke',
+        isDestructive: true,
+        onConfirm: () => Navigator.of(context).pop(true),
+        onCancel: () => Navigator.of(context).pop(false),
       ),
     );
+
+    if (confirmed == true) {
+      _revokeAccess(share);
+    }
   }
 
   Future<void> _revokeAccess(PetShare share) async {
     try {
-      await ref
-          .read(sharingRepositoryProvider)
-          .revokeAccess(share.supabaseId!);
+      await ref.read(sharingRepositoryProvider).revokeAccess(share.supabaseId!);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Access revoked')),
+        OverlayManager.showToast(
+          context,
+          message: 'Access revoked',
+          type: ToastType.success,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+        OverlayManager.showToast(
+          context,
+          message: 'Error: $e',
+          type: ToastType.error,
         );
       }
     }
   }
 
   Widget _buildShareTile(String title, {bool isPlaceholder = false}) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+        ),
       ),
       child: Row(
         children: [
@@ -304,7 +318,11 @@ class _SharingScreenState extends ConsumerState<SharingScreen> {
             child: Text(
               title,
               style: TextStyle(
-                color: isPlaceholder ? Colors.grey : Colors.black,
+                color: isPlaceholder
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.4)
+                    : Theme.of(context).colorScheme.onSurface,
                 fontStyle: isPlaceholder ? FontStyle.italic : FontStyle.normal,
               ),
             ),
