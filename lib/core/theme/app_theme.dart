@@ -14,6 +14,13 @@ class AppTheme {
   static const Color backgroundDark = Color(0xFF112116);
   static const Color surfaceDark = Color(0xFF1A3222);
 
+  // Premium Overlay Colors
+  static const Color overlayBackground = Color(0xFF1A2E1F);
+  static const Color overlayError = Color(0xFFFF4D4D);
+  static Color overlayBorder = primary.withValues(alpha: 0.2);
+  static Color successGlow = primary.withValues(alpha: 0.4);
+  static Color errorGlow = overlayError.withValues(alpha: 0.4);
+
   // Text Colors
   static const Color textLight = Color(0xFF0F172A);
   static const Color textDark = Colors.white;
