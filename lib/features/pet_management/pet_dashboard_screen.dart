@@ -10,7 +10,9 @@ import 'pet_provider.dart';
 import 'pet_form_screen.dart';
 import 'pet_history_screen.dart';
 import '../health_schedules/add_schedule_screen.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
 import '../../core/theme/app_theme.dart';
+import '../profile/profile_provider.dart';
 
 final activePetIdProvider = StateProvider<String?>((ref) => null);
 
@@ -29,6 +31,7 @@ class PetDashboardScreen extends ConsumerWidget {
       final schedMgr = ref.read(scheduleManagementProvider);
       schedMgr.syncAllUnsynced();
       schedMgr.fetchSchedulesFromRemote();
+      ref.read(profileProvider.notifier).syncFromRemote();
     });
 
     return Scaffold(
@@ -41,6 +44,7 @@ class PetDashboardScreen extends ConsumerWidget {
                 final schedMgr = ref.read(scheduleManagementProvider);
                 await schedMgr.syncAllUnsynced();
                 await schedMgr.fetchSchedulesFromRemote();
+                await ref.read(profileProvider.notifier).syncFromRemote();
               },
               child: _buildEmptyState(context),
             );
@@ -60,6 +64,7 @@ class PetDashboardScreen extends ConsumerWidget {
               final schedMgr = ref.read(scheduleManagementProvider);
               await schedMgr.syncAllUnsynced();
               await schedMgr.fetchSchedulesFromRemote();
+              await ref.read(profileProvider.notifier).syncFromRemote();
             },
             color: theme.colorScheme.primary,
             backgroundColor: theme.colorScheme.surface,
@@ -164,6 +169,11 @@ class PetDashboardScreen extends ConsumerWidget {
                                 color: theme.colorScheme.primary,
                               ),
                               onPressed: () async {
+                                OverlayManager.showToast(
+                                  context,
+                                  message: 'Syncing your data...',
+                                  type: ToastType.sync,
+                                );
                                 await ref
                                     .read(petManagementProvider)
                                     .performFullSync();
@@ -172,6 +182,16 @@ class PetDashboardScreen extends ConsumerWidget {
                                 );
                                 await schedMgr.syncAllUnsynced();
                                 await schedMgr.fetchSchedulesFromRemote();
+                                await ref
+                                    .read(profileProvider.notifier)
+                                    .syncFromRemote();
+                                if (context.mounted) {
+                                  OverlayManager.showToast(
+                                    context,
+                                    message: 'Everything is up to date!',
+                                    type: ToastType.success,
+                                  );
+                                }
                               },
                             ),
                           ],
@@ -582,7 +602,10 @@ class PetDashboardScreen extends ConsumerWidget {
                 ),
                 Text(
                   'Due: ${_formatDate(schedule.startDate)}',
-                  style: GoogleFonts.manrope(color: Colors.grey, fontSize: 13),
+                  style: GoogleFonts.manrope(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -605,6 +628,7 @@ class PetDashboardScreen extends ConsumerWidget {
       crossAxisCount: 4,
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
+      childAspectRatio: 0.85,
       children: [
         _buildActionItem(
           context,
@@ -671,6 +695,9 @@ class PetDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.outfit(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -725,8 +752,10 @@ class PetDashboardScreen extends ConsumerWidget {
     String? type,
   ) {
     if (petSupabaseId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please wait for sync to complete')),
+      OverlayManager.showToast(
+        context,
+        message: 'Please wait for sync to complete',
+        type: ToastType.error,
       );
       return;
     }

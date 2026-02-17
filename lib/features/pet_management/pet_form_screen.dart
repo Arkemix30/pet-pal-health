@@ -10,6 +10,9 @@ import '../../data/local/isar_models.dart';
 import '../../core/services/storage_service.dart';
 import 'pet_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/success_modal.dart';
+import '../../core/ui/overlays/confirm_dialog.dart';
 
 class PetFormScreen extends ConsumerStatefulWidget {
   final Pet? initialPet;
@@ -135,16 +138,26 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
       await ref.read(petManagementProvider).savePet(pet);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
+        OverlayManager.showPremiumModal(
+          context,
+          child: PremiumSuccessModal(
+            title: 'Profile Updated!',
+            message: 'Your changes for',
+            petName: pet.name,
+            onPrimaryPressed: () {
+              Navigator.of(context).pop(); // Close Modal
+              Navigator.of(context).pop(); // Go back
+            },
+          ),
         );
-        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        OverlayManager.showToast(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error saving pet: $e')));
+          message: 'Error saving pet: $e',
+          type: ToastType.error,
+        );
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -154,28 +167,16 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
   void _deletePet() async {
     if (widget.initialPet == null) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Delete Profile',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Are you sure you want to delete ${_nameController.text}\'s profile? This action can only be undone by an administrator.',
-          style: GoogleFonts.firaSans(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
+    final confirmed = await OverlayManager.showPremiumModal<bool>(
+      context,
+      child: PremiumConfirmDialog(
+        title: 'Delete Profile',
+        message:
+            'Are you sure you want to delete ${_nameController.text}\'s profile? This action can only be undone by an administrator.',
+        confirmLabel: 'Delete',
+        isDestructive: true,
+        onConfirm: () => Navigator.of(context).pop(true),
+        onCancel: () => Navigator.of(context).pop(false),
       ),
     );
 
@@ -184,20 +185,21 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
       try {
         await ref.read(petManagementProvider).softDeletePet(widget.initialPet!);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile deleted successfully'),
-              backgroundColor: Colors.red,
-            ),
+          OverlayManager.showToast(
+            context,
+            message: 'Profile deleted successfully',
+            type: ToastType.success,
           );
           // Go back to the dashboard (pop twice if coming from details)
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
+          OverlayManager.showToast(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error deleting pet: $e')));
+            message: 'Error deleting pet: $e',
+            type: ToastType.error,
+          );
         }
       } finally {
         if (mounted) setState(() => _isUploading = false);

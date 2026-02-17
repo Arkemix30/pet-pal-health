@@ -32,16 +32,22 @@ class PetHistoryScreen extends ConsumerWidget {
       'Appointment',
     ];
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Slightly off-white background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           "${pet.name}'s History",
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
+          style: GoogleFonts.manrope(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.transparent, // Fully transparent app bar
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -116,7 +122,7 @@ class PetHistoryScreen extends ConsumerWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF2D6A4F),
+                              color: theme.colorScheme.primary,
                               width: 3,
                             ),
                             image: pet.photoUrl != null
@@ -125,13 +131,15 @@ class PetHistoryScreen extends ConsumerWidget {
                                     fit: BoxFit.cover,
                                   )
                                 : null,
-                            color: Colors.grey[200],
+                            color: theme.colorScheme.surface,
                           ),
                           child: pet.photoUrl == null
                               ? Icon(
                                   Icons.pets,
                                   size: 40,
-                                  color: Colors.grey[400],
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.2,
+                                  ),
                                 )
                               : null,
                         ),
@@ -146,7 +154,7 @@ class PetHistoryScreen extends ConsumerWidget {
                                 style: GoogleFonts.manrope(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -155,13 +163,15 @@ class PetHistoryScreen extends ConsumerWidget {
                                   Icon(
                                     Icons.pets,
                                     size: 14,
-                                    color: Colors.grey[600],
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.6),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     pet.breed ?? pet.species,
                                     style: GoogleFonts.manrope(
-                                      color: Colors.grey[600],
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.6),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -169,13 +179,15 @@ class PetHistoryScreen extends ConsumerWidget {
                                     Icon(
                                       Icons.scale,
                                       size: 14,
-                                      color: Colors.grey[600],
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.6),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       '${pet.weightKg}kg',
                                       style: GoogleFonts.manrope(
-                                        color: Colors.grey[600],
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.6),
                                       ),
                                     ),
                                   ],
@@ -188,8 +200,8 @@ class PetHistoryScreen extends ConsumerWidget {
                         if (pet.birthDate != null)
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2D6A4F),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
                             child: Text(
@@ -234,17 +246,21 @@ class PetHistoryScreen extends ConsumerWidget {
                                   filter;
                             }
                           },
-                          backgroundColor: Colors.transparent,
-                          selectedColor: const Color(0xFF2D6A4F),
+                          backgroundColor: theme.colorScheme.surface,
+                          selectedColor: theme.colorScheme.primary,
                           labelStyle: GoogleFonts.manrope(
-                            color: isSelected ? Colors.white : Colors.grey[600],
+                            color: isSelected
+                                ? Colors.black
+                                : theme.colorScheme.onSurface.withOpacity(0.6),
                             fontWeight: FontWeight.w600,
                           ),
                           shape: StadiumBorder(
                             side: BorderSide(
                               color: isSelected
-                                  ? const Color(0xFF2D6A4F)
-                                  : Colors.grey[300]!,
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface.withOpacity(
+                                      0.1,
+                                    ),
                             ),
                           ),
                           showCheckmark: false,
@@ -348,6 +364,9 @@ class _MonthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
       child: IntrinsicHeight(
@@ -359,7 +378,7 @@ class _MonthHeader extends StatelessWidget {
               child: Center(
                 child: Container(
                   width: 2,
-                  color: Colors.grey.withValues(alpha: 0.2),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -368,13 +387,15 @@ class _MonthHeader extends StatelessWidget {
               margin: const EdgeInsets.symmetric(vertical: 16),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
+                color: isDark
+                    ? theme.colorScheme.surface
+                    : const Color(0xFFE0E0E0),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 month,
                 style: GoogleFonts.manrope(
-                  color: Colors.black87,
+                  color: theme.colorScheme.onSurface,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -396,6 +417,7 @@ class _HistoryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final color = PetHistoryScreen._getCategoryColor(item.type);
     final icon = PetHistoryScreen._getCategoryIcon(item.type);
 
@@ -414,14 +436,14 @@ class _HistoryItem extends StatelessWidget {
                     flex: 1,
                     child: Container(
                       width: 2,
-                      color: Colors.grey.withValues(alpha: 0.2),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                     ),
                   ),
                   Container(
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.colorScheme.surface,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: color.withValues(alpha: 0.3),
@@ -441,7 +463,7 @@ class _HistoryItem extends StatelessWidget {
                     flex: 4,
                     child: Container(
                       width: 2,
-                      color: Colors.grey.withValues(alpha: 0.2),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                     ),
                   ),
                 ],
@@ -455,10 +477,12 @@ class _HistoryItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.05,
+                      ),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -480,7 +504,7 @@ class _HistoryItem extends StatelessWidget {
                               style: GoogleFonts.manrope(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Colors.black87,
+                                color: theme.colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -491,14 +515,18 @@ class _HistoryItem extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.grey.withValues(alpha: 0.1),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 DateFormat('MMM d').format(item.completedAt!),
                                 style: GoogleFonts.manrope(
                                   fontSize: 12,
-                                  color: Colors.grey[700],
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.7,
+                                  ),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -509,7 +537,9 @@ class _HistoryItem extends StatelessWidget {
                       Text(
                         item.notes ?? item.type.toUpperCase(),
                         style: GoogleFonts.manrope(
-                          color: Colors.grey[600],
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                           fontSize: 14,
                         ),
                         maxLines: 2,
@@ -522,13 +552,17 @@ class _HistoryItem extends StatelessWidget {
                             Icon(
                               Icons.person,
                               size: 14,
-                              color: Colors.grey[500],
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               "Vet Clinic",
                               style: GoogleFonts.manrope(
-                                color: Colors.grey[500],
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.4,
+                                ),
                                 fontSize: 12,
                               ),
                             ),

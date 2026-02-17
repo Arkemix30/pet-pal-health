@@ -10,6 +10,9 @@ import '../pet_management/pet_form_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../pet_management/pet_history_screen.dart';
 import '../pet_management/pet_provider.dart';
+import '../../core/ui/overlays/overlay_manager.dart';
+import '../../core/ui/overlays/confirm_dialog.dart';
+import '../../core/theme/app_theme.dart';
 
 class PetDetailsScreen extends ConsumerWidget {
   final Pet pet;
@@ -119,8 +122,38 @@ class PetDetailsScreen extends ConsumerWidget {
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) =>
-          Scaffold(body: Center(child: Text('Error loading pet: $e'))),
+      error: (e, _) => Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 60, color: AppTheme.overlayError),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading pet profile',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                e.toString(),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.manrope(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => ref.refresh(singlePetStreamProvider(pet.id)),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(200, 50),
+                ),
+                child: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -162,7 +195,7 @@ class PetDetailsScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF19E65E),
+                  color: AppTheme.primary,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check, size: 20, color: Colors.black),
@@ -192,23 +225,21 @@ class PetDetailsScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF19E65E).withValues(alpha: 0.1),
+            color: AppTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFF19E65E).withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.circle, size: 10, color: Color(0xFF19E65E)),
+              const Icon(Icons.circle, size: 10, color: AppTheme.primary),
               const SizedBox(width: 8),
               Text(
                 'ALL SYSTEMS GOOD',
                 style: GoogleFonts.outfit(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  color: const Color(0xFF19E65E),
+                  color: AppTheme.primary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -610,7 +641,6 @@ class PetDetailsScreen extends ConsumerWidget {
             style: GoogleFonts.outfit(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.grey,
               height: 1.2,
             ),
           ),
@@ -619,32 +649,33 @@ class PetDetailsScreen extends ConsumerWidget {
     );
   }
 
-  void _markAsDone(BuildContext context, WidgetRef ref, HealthSchedule s) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          'Complete Task?',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-        ),
-        content: Text('Did you complete "${s.title}"?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(minimumSize: const Size(100, 45)),
-            onPressed: () {
-              ref.read(scheduleManagementProvider).completeSchedule(s);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Done'),
-          ),
-        ],
+  void _markAsDone(
+    BuildContext context,
+    WidgetRef ref,
+    HealthSchedule s,
+  ) async {
+    final confirmed = await OverlayManager.showPremiumModal<bool>(
+      context,
+      child: PremiumConfirmDialog(
+        title: 'Complete Task?',
+        message: 'Did you complete "${s.title}"?',
+        confirmLabel: 'Yes, done!',
+        cancelLabel: 'Not yet',
+        onConfirm: () => Navigator.of(context).pop(true),
+        onCancel: () => Navigator.of(context).pop(false),
       ),
     );
+
+    if (confirmed == true) {
+      await ref.read(scheduleManagementProvider).completeSchedule(s);
+      if (context.mounted) {
+        OverlayManager.showToast(
+          context,
+          message: 'Task completed!',
+          type: ToastType.success,
+        );
+      }
+    }
   }
 
   void _navigateToAddSchedule(
@@ -653,8 +684,10 @@ class PetDetailsScreen extends ConsumerWidget {
     String? type,
   }) {
     if (currentPet.supabaseId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please wait for sync to complete')),
+      OverlayManager.showToast(
+        context,
+        message: 'Please wait for sync to complete',
+        type: ToastType.error,
       );
       return;
     }
@@ -663,6 +696,7 @@ class PetDetailsScreen extends ConsumerWidget {
         builder: (_) => AddScheduleScreen(
           petSupabaseId: currentPet.supabaseId!,
           initialType: type,
+          pet: currentPet,
         ),
       ),
     );
